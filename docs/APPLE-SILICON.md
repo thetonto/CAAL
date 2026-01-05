@@ -43,8 +43,23 @@ ollama serve  # Keep running or use: brew services start ollama
 
 ### 2. mlx-audio
 
+> **Recommended:** The easiest way to install mlx-audio with all its dependencies is to use the `start-apple.sh` script. It will automatically create the virtual environment, install all dependencies, and download the required models. Just run `./start-apple.sh` and everything will be set up for you.
+
+If you prefer manual installation, mlx-audio requires a dedicated virtual environment with all dependencies for STT (Whisper) and TTS (Kokoro).
+
+> **Important:** Use Python 3.11 for compatibility. Python 3.12+ may have issues with some dependencies.
+
 ```bash
-pip install "mlx-audio[all]"
+# Create dedicated virtual environment (Python 3.11 recommended)
+python3.11 -m venv ~/.mlx-audio-venv
+~/.mlx-audio-venv/bin/pip install --upgrade pip
+
+# Install mlx-audio with all dependencies
+~/.mlx-audio-venv/bin/pip install \
+    mlx-audio \
+    soundfile fastapi uvicorn webrtcvad python-multipart \
+    numba tiktoken scipy tqdm \
+    loguru misaki num2words spacy phonemizer-fork espeakng-loader torch
 ```
 
 ### 3. Docker Desktop
@@ -173,6 +188,19 @@ curl http://localhost:11434/api/tags
 
 ### "mlx-audio failed to start"
 
+Check the logs for missing dependencies:
+```bash
+tail -50 /tmp/caal-mlx-audio.log
+```
+
+Common missing dependencies:
+- `ModuleNotFoundError: No module named 'numba'` → `~/.mlx-audio-venv/bin/pip install numba`
+- `ModuleNotFoundError: No module named 'loguru'` → `~/.mlx-audio-venv/bin/pip install loguru`
+- `ModuleNotFoundError: No module named 'soundfile'` → `~/.mlx-audio-venv/bin/pip install soundfile`
+- `ModuleNotFoundError: No module named 'spacy'` → `~/.mlx-audio-venv/bin/pip install spacy phonemizer-fork`
+- `Model type kokoro not supported` → `~/.mlx-audio-venv/bin/pip install loguru misaki num2words spacy phonemizer-fork`
+- `Model type whisper not supported` → `~/.mlx-audio-venv/bin/pip install numba`
+
 Check if port 8001 is already in use:
 ```bash
 lsof -i :8001
@@ -210,7 +238,8 @@ OLLAMA_KEEP_ALIVE=24h ollama serve
 
 ### TTS (Text-to-Speech)
 - Default: `prince-canuma/Kokoro-82M`
-- Voice: `am_puck` (configurable in `.env` as `TTS_VOICE`)
+- Voice: `af_heart` (configurable in `.env` as `TTS_VOICE`)
+- Available voices: `af_heart`, `af_bella`, `af_nova`, `af_alloy` (American female), `bf_emma` (British female)
 
 ### LLM
 - Default: `ministral-3:8b` (good tool-calling, low latency)
