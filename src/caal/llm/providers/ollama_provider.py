@@ -56,10 +56,13 @@ class OllamaProvider(LLMProvider):
         self._top_p = top_p
         self._top_k = top_k
         self._num_ctx = num_ctx
-        self._base_url = base_url  # ollama library reads OLLAMA_HOST env
+        self._base_url = base_url
+
+        # Create client with custom host if provided
+        self._client = ollama.Client(host=base_url) if base_url else ollama.Client()
 
         logger.debug(
-            f"OllamaProvider initialized: {model} (think={think}, num_ctx={num_ctx})"
+            f"OllamaProvider initialized: {model} (think={think}, num_ctx={num_ctx}, host={base_url or 'default'})"
         )
 
     @property
@@ -115,9 +118,9 @@ class OllamaProvider(LLMProvider):
         think = kwargs.get("think", self._think)
         options = self._get_options()
 
-        # Run sync ollama.chat in thread pool
+        # Run sync client.chat in thread pool
         response = await asyncio.to_thread(
-            ollama.chat,
+            self._client.chat,
             model=self._model,
             messages=messages,
             tools=tools,
@@ -166,10 +169,10 @@ class OllamaProvider(LLMProvider):
         think = kwargs.get("think", self._think)
         options = self._get_options()
 
-        # Run sync ollama.chat with streaming in thread pool
-        # We need to iterate in a thread since ollama.chat returns a sync iterator
+        # Run sync client.chat with streaming in thread pool
+        # We need to iterate in a thread since client.chat returns a sync iterator
         def _stream():
-            return ollama.chat(
+            return self._client.chat(
                 model=self._model,
                 messages=messages,
                 tools=tools,

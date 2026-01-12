@@ -104,6 +104,7 @@ def create_provider_from_settings(settings: dict[str, Any]) -> LLMProvider:
     if provider_name == "ollama":
         return OllamaProvider(
             model=settings.get("ollama_model", "qwen3:8b"),
+            base_url=settings.get("ollama_host"),
             think=settings.get("think", False),
             temperature=settings.get("temperature", 0.7),
             num_ctx=settings.get("num_ctx", 8192),
