@@ -65,6 +65,8 @@ export const TOOL_CATEGORIES = [
   'homelab',
   'productivity',
   'utilities',
+  'social',
+  'other',
 ] as const;
 
 export type ToolCategory = (typeof TOOL_CATEGORIES)[number];
@@ -75,6 +77,8 @@ export const CATEGORY_LABELS: Record<ToolCategory, string> = {
   homelab: 'Homelab',
   productivity: 'Productivity',
   utilities: 'Utilities',
+  social: 'Social',
+  other: 'Other',
 };
 
 export const CATEGORY_COLORS: Record<ToolCategory, string> = {
@@ -83,6 +87,8 @@ export const CATEGORY_COLORS: Record<ToolCategory, string> = {
   homelab: 'bg-purple-500/20 text-purple-400',
   productivity: 'bg-blue-500/20 text-blue-400',
   utilities: 'bg-gray-500/20 text-gray-400',
+  social: 'bg-pink-500/20 text-pink-400',
+  other: 'bg-yellow-500/20 text-yellow-400',
 };
 
 export const TIER_COLORS: Record<string, string> = {

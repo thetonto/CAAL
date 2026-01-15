@@ -7,6 +7,7 @@ import { useToolRegistry } from '@/hooks/useToolRegistry';
 import type { ToolIndexEntry } from '@/types/tools';
 import { CategoryFilter } from './category-filter';
 import { ToolCard } from './tool-card';
+import { ToolDetailModal } from './tool-detail-modal';
 import { ToolInstallModal } from './tool-install-modal';
 
 interface ToolsPanelProps {
@@ -27,6 +28,7 @@ export function ToolsPanel({ isOpen, onClose }: ToolsPanelProps) {
   } = useToolRegistry();
 
   const [installingTool, setInstallingTool] = useState<ToolIndexEntry | null>(null);
+  const [selectedTool, setSelectedTool] = useState<ToolIndexEntry | null>(null);
   const [n8nEnabled, setN8nEnabled] = useState<boolean | null>(null);
   const [checkingN8n, setCheckingN8n] = useState(true);
 
@@ -54,7 +56,12 @@ export function ToolsPanel({ isOpen, onClose }: ToolsPanelProps) {
   }, [isOpen, refresh, checkN8nStatus]);
 
   const handleInstall = useCallback((tool: ToolIndexEntry) => {
+    setSelectedTool(null); // Close detail modal if open
     setInstallingTool(tool);
+  }, []);
+
+  const handleCardClick = useCallback((tool: ToolIndexEntry) => {
+    setSelectedTool(tool);
   }, []);
 
   const handleInstallComplete = useCallback(() => {
@@ -163,12 +170,23 @@ export function ToolsPanel({ isOpen, onClose }: ToolsPanelProps) {
                   key={tool.path}
                   tool={tool}
                   onInstall={n8nEnabled ? handleInstall : () => {}}
+                  onClick={handleCardClick}
                 />
               ))}
             </div>
           )}
         </main>
       </div>
+
+      {/* Detail modal */}
+      {selectedTool && (
+        <ToolDetailModal
+          tool={selectedTool}
+          onClose={() => setSelectedTool(null)}
+          onInstall={handleInstall}
+          n8nEnabled={n8nEnabled ?? false}
+        />
+      )}
 
       {/* Install modal */}
       {installingTool && (

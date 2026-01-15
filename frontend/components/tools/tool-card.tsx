@@ -12,16 +12,20 @@ import {
 interface ToolCardProps {
   tool: ToolIndexEntry;
   onInstall: (tool: ToolIndexEntry) => void;
+  onClick: (tool: ToolIndexEntry) => void;
 }
 
-export function ToolCard({ tool, onInstall }: ToolCardProps) {
+export function ToolCard({ tool, onInstall, onClick }: ToolCardProps) {
   const categoryColor =
     CATEGORY_COLORS[tool.category as ToolCategory] || 'bg-gray-500/20 text-gray-400';
   const tierColor = TIER_COLORS[tool.tier] || 'bg-gray-500/20 text-gray-400';
   const categoryLabel = CATEGORY_LABELS[tool.category as ToolCategory] || tool.category;
 
   return (
-    <div className="bg-muted/30 flex flex-col rounded-xl border p-4">
+    <div
+      onClick={() => onClick(tool)}
+      className="bg-muted/30 flex cursor-pointer flex-col rounded-xl border p-4 transition-colors hover:border-blue-500/50"
+    >
       {/* Header badges */}
       <div className="mb-3 flex items-center justify-between">
         <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${categoryColor}`}>
@@ -72,7 +76,10 @@ export function ToolCard({ tool, onInstall }: ToolCardProps) {
 
       {/* Install button */}
       <button
-        onClick={() => onInstall(tool)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onInstall(tool);
+        }}
         className="bg-primary text-primary-foreground hover:bg-primary/90 mt-auto rounded-lg px-4 py-2 text-sm font-medium transition-colors"
       >
         Install
