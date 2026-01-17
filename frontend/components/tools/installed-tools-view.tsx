@@ -107,7 +107,8 @@ export function InstalledToolsView({ registryTools, n8nEnabled }: InstalledTools
       });
 
       if (!response.ok) {
-        throw new Error('Submission failed');
+        const errorData = await response.json().catch(() => ({ detail: 'Submission failed' }));
+        throw new Error(errorData.detail || errorData.error || 'Submission failed');
       }
 
       const { form_url } = await response.json();

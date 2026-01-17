@@ -1113,7 +1113,7 @@ async def get_n8n_workflows() -> N8nWorkflowsResponse:
         # Prepare headers for MCP requests
         headers = {
             "Content-Type": "application/json",
-            "Accept": "application/json",
+            "Accept": "application/json, text/event-stream",
         }
         if n8n_token:
             headers["Authorization"] = f"Bearer {n8n_token}"
@@ -1138,19 +1138,26 @@ async def get_n8n_workflows() -> N8nWorkflowsResponse:
             )
             search_response.raise_for_status()
 
-            # Parse MCP result (n8n returns {"data": [...], "count": N})
-            search_data = search_response.json()
-            if "result" in search_data and "content" in search_data["result"]:
-                # Extract workflow list from MCP response
-                content = search_data["result"]["content"]
-                if isinstance(content, list) and len(content) > 0:
-                    # MCP returns content as array of TextContent
-                    workflow_data = json.loads(content[0]["text"])
-                    workflow_list = workflow_data.get("data", [])
-                else:
-                    workflow_list = []
-            else:
-                workflow_list = []
+            # Parse SSE response from n8n MCP server
+            # n8n returns data in SSE format like: data: {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"..."}]}}
+            search_text = search_response.text
+            workflow_list = []
+
+            # Parse SSE lines
+            for line in search_text.split('\n'):
+                if line.startswith('data: '):
+                    try:
+                        sse_data = json.loads(line[6:])  # Strip 'data: ' prefix
+                        if "result" in sse_data and "content" in sse_data["result"]:
+                            content = sse_data["result"]["content"]
+                            if isinstance(content, list) and len(content) > 0:
+                                # MCP returns content as array of TextContent
+                                workflow_data = json.loads(content[0]["text"])
+                                workflow_list = workflow_data.get("data", [])
+                                break
+                    except (json.JSONDecodeError, KeyError, IndexError) as e:
+                        logger.warning(f"Failed to parse SSE line: {e}")
+                        continue
 
             logger.info(f"Found {len(workflow_list)} n8n workflows")
 
@@ -1177,16 +1184,24 @@ async def get_n8n_workflows() -> N8nWorkflowsResponse:
                     )
                     details_response.raise_for_status()
 
-                    # Parse full workflow JSON
-                    details_data = details_response.json()
-                    if "result" in details_data and "content" in details_data["result"]:
-                        content = details_data["result"]["content"]
-                        if isinstance(content, list) and len(content) > 0:
-                            workflow_full = json.loads(content[0]["text"])
-                        else:
-                            workflow_full = {}
-                    else:
-                        workflow_full = {}
+                    # Parse SSE response for workflow details
+                    details_text = details_response.text
+                    workflow_full = {}
+
+                    for line in details_text.split('\n'):
+                        if line.startswith('data: '):
+                            try:
+                                sse_data = json.loads(line[6:])
+                                if "result" in sse_data and "content" in sse_data["result"]:
+                                    content = sse_data["result"]["content"]
+                                    if isinstance(content, list) and len(content) > 0:
+                                        workflow_full = json.loads(content[0]["text"])
+                                        break
+                            except (json.JSONDecodeError, KeyError, IndexError):
+                                continue
+
+                    # Unwrap workflow if MCP returns { workflow: {...} } structure
+                    workflow_data = workflow_full.get("workflow", workflow_full) if isinstance(workflow_full, dict) else workflow_full
 
                     # Build response item
                     workflows.append(
@@ -1197,7 +1212,7 @@ async def get_n8n_workflows() -> N8nWorkflowsResponse:
                             tags=wf.get("tags", []),
                             createdAt=wf.get("createdAt", ""),
                             updatedAt=wf.get("updatedAt", ""),
-                            workflow=workflow_full,
+                            workflow=workflow_data,
                         )
                     )
                     logger.debug(f"Fetched full details for workflow: {wf_name}")

@@ -32,7 +32,7 @@ export function InstalledToolCard({ workflow, isFromRegistry, onShare }: Install
           {badgeText}
         </span>
         {workflow.active && (
-          <CheckCircle className="h-4 w-4 text-green-400" weight="fill" title="Active" />
+          <CheckCircle className="h-4 w-4 text-green-400" weight="fill" aria-label="Active" />
         )}
       </div>
 

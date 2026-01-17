@@ -65,9 +65,8 @@ try {
   }
 
   // Verify credential ID was nullified
-  const httpNode = result.sanitized.nodes.find(
-    (n: any) => n.id === 'http-request'
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const httpNode = result.sanitized.nodes.find((n: any) => n.id === 'http-request');
   if (httpNode.credentials.httpHeaderAuth.id === null) {
     console.log('✓ Credential ID nullified');
   } else {
@@ -141,14 +140,10 @@ try {
   const result = sanitizeWorkflow(JSON.parse(JSON.stringify(workflowWithRL)));
 
   // Check if resource locator was converted
-  const calendarNode = result.sanitized.nodes.find(
-    (n: any) => n.id === 'calendar-node'
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const calendarNode = result.sanitized.nodes.find((n: any) => n.id === 'calendar-node');
 
-  if (
-    calendarNode.parameters.calendar.__rl &&
-    calendarNode.parameters.calendar.mode === 'id'
-  ) {
+  if (calendarNode.parameters.calendar.__rl && calendarNode.parameters.calendar.mode === 'id') {
     console.log('✓ Resource locator converted from list to id mode');
     console.log(`  Value: ${calendarNode.parameters.calendar.value}`);
   } else {
