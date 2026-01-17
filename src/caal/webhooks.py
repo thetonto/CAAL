@@ -1061,6 +1061,178 @@ async def test_n8n(req: TestN8nRequest) -> TestConnectionResponse:
 
 
 # =============================================================================
+# n8n Workflows Endpoint
+# =============================================================================
+
+
+class N8nWorkflowItem(BaseModel):
+    """Individual workflow in the n8n workflows list."""
+
+    id: str
+    name: str
+    active: bool
+    tags: list[str]
+    createdAt: str
+    updatedAt: str
+    workflow: dict  # Full workflow JSON
+
+
+class N8nWorkflowsResponse(BaseModel):
+    """Response body for /n8n-workflows endpoint."""
+
+    workflows: list[N8nWorkflowItem]
+
+
+@app.get("/n8n-workflows", response_model=N8nWorkflowsResponse)
+async def get_n8n_workflows() -> N8nWorkflowsResponse:
+    """Get all n8n workflows with full workflow JSON.
+
+    This endpoint calls the n8n MCP server to fetch all workflows
+    and their full JSON for use in the frontend's installed tools view.
+
+    Returns:
+        N8nWorkflowsResponse with list of workflows
+
+    Raises:
+        HTTPException: 400 if n8n not configured, 500 if fetch fails
+    """
+    settings = settings_module.load_settings()
+
+    # Check if n8n is enabled and configured
+    n8n_enabled = settings.get("n8n_enabled", False)
+    n8n_url = settings.get("n8n_url", "")
+    n8n_token = settings.get("n8n_token", "")
+
+    if not n8n_enabled or not n8n_url:
+        raise HTTPException(
+            status_code=400,
+            detail="n8n not configured. Enable n8n in settings first.",
+        )
+
+    try:
+        # Prepare headers for MCP requests
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        if n8n_token:
+            headers["Authorization"] = f"Bearer {n8n_token}"
+
+        workflows = []
+
+        async with httpx.AsyncClient() as client:
+            # Step 1: Call search_workflows MCP tool
+            search_response = await client.post(
+                n8n_url,
+                headers=headers,
+                json={
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "tools/call",
+                    "params": {
+                        "name": "search_workflows",
+                        "arguments": {},
+                    },
+                },
+                timeout=30.0,
+            )
+            search_response.raise_for_status()
+
+            # Parse MCP result (n8n returns {"data": [...], "count": N})
+            search_data = search_response.json()
+            if "result" in search_data and "content" in search_data["result"]:
+                # Extract workflow list from MCP response
+                content = search_data["result"]["content"]
+                if isinstance(content, list) and len(content) > 0:
+                    # MCP returns content as array of TextContent
+                    workflow_data = json.loads(content[0]["text"])
+                    workflow_list = workflow_data.get("data", [])
+                else:
+                    workflow_list = []
+            else:
+                workflow_list = []
+
+            logger.info(f"Found {len(workflow_list)} n8n workflows")
+
+            # Step 2: For each workflow, get full details
+            for wf in workflow_list:
+                wf_id = wf["id"]
+                wf_name = wf["name"]
+
+                try:
+                    # Call get_workflow_details MCP tool
+                    details_response = await client.post(
+                        n8n_url,
+                        headers=headers,
+                        json={
+                            "jsonrpc": "2.0",
+                            "id": wf_id,
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_workflow_details",
+                                "arguments": {"workflowId": wf_id},
+                            },
+                        },
+                        timeout=30.0,
+                    )
+                    details_response.raise_for_status()
+
+                    # Parse full workflow JSON
+                    details_data = details_response.json()
+                    if "result" in details_data and "content" in details_data["result"]:
+                        content = details_data["result"]["content"]
+                        if isinstance(content, list) and len(content) > 0:
+                            workflow_full = json.loads(content[0]["text"])
+                        else:
+                            workflow_full = {}
+                    else:
+                        workflow_full = {}
+
+                    # Build response item
+                    workflows.append(
+                        N8nWorkflowItem(
+                            id=wf_id,
+                            name=wf_name,
+                            active=wf.get("active", False),
+                            tags=wf.get("tags", []),
+                            createdAt=wf.get("createdAt", ""),
+                            updatedAt=wf.get("updatedAt", ""),
+                            workflow=workflow_full,
+                        )
+                    )
+                    logger.debug(f"Fetched full details for workflow: {wf_name}")
+
+                except Exception as e:
+                    logger.warning(f"Failed to get details for workflow {wf_name}: {e}")
+                    # Include workflow without full JSON
+                    workflows.append(
+                        N8nWorkflowItem(
+                            id=wf_id,
+                            name=wf_name,
+                            active=wf.get("active", False),
+                            tags=wf.get("tags", []),
+                            createdAt=wf.get("createdAt", ""),
+                            updatedAt=wf.get("updatedAt", ""),
+                            workflow={},
+                        )
+                    )
+
+        return N8nWorkflowsResponse(workflows=workflows)
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Cannot connect to n8n at {n8n_url}",
+        )
+    except Exception as e:
+        logger.error(f"Failed to fetch n8n workflows: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch workflows: {str(e)}",
+        )
+
+
+# =============================================================================
 # Prewarm Endpoint
 # =============================================================================
 
