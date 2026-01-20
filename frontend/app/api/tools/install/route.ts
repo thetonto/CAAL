@@ -8,8 +8,8 @@ interface InstallRequest {
   credentials: Record<string, string>;
   toolName: string;
   voiceTrigger?: string;
-  registryId?: string;  // CAAL registry ID for tracking
-  registryVersion?: string;  // Registry version for update detection
+  registryId?: string; // CAAL registry ID for tracking
+  registryVersion?: string; // Registry version for update detection
 }
 
 function substituteVariables(
@@ -51,8 +51,15 @@ function extractN8nBaseUrl(mcpUrl: string): string {
 export async function POST(request: NextRequest) {
   try {
     const body: InstallRequest = await request.json();
-    const { workflow, variables, credentials, toolName, voiceTrigger, registryId, registryVersion } =
-      body;
+    const {
+      workflow,
+      variables,
+      credentials,
+      toolName,
+      voiceTrigger,
+      registryId,
+      registryVersion,
+    } = body;
 
     if (!workflow || !toolName) {
       return NextResponse.json({ error: 'Missing workflow or toolName' }, { status: 400 });

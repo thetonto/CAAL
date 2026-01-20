@@ -18,6 +18,7 @@ interface WorkflowSubmissionDialogProps {
   result: SanitizationResult;
   error: string | null;
   isSubmitting?: boolean;
+  formUrl?: string | null;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -27,6 +28,7 @@ export function WorkflowSubmissionDialog({
   result,
   error,
   isSubmitting = false,
+  formUrl,
   onConfirm,
   onCancel,
 }: WorkflowSubmissionDialogProps) {
@@ -153,6 +155,27 @@ export function WorkflowSubmissionDialog({
               </div>
             </div>
           )}
+
+          {/* Success - Form URL ready */}
+          {formUrl && !error && (
+            <div className="flex items-start gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4">
+              <CheckCircle className="h-5 w-5 shrink-0 text-green-400" weight="fill" />
+              <div className="flex-1">
+                <p className="font-medium text-green-200">Ready to submit!</p>
+                <p className="mt-1 text-sm text-green-300/80">
+                  Complete your submission in the form. If popup was blocked, click below:
+                </p>
+                <a
+                  href={formUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-500"
+                >
+                  Open Submission Form
+                </a>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -162,15 +185,17 @@ export function WorkflowSubmissionDialog({
             disabled={isSubmitting}
             className="hover:bg-muted rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Cancel
+            {formUrl ? 'Close' : 'Cancel'}
           </button>
-          <button
-            onClick={onConfirm}
-            disabled={!!error || isSubmitting}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isSubmitting ? 'Preparing submission...' : 'Continue to Submission Form'}
-          </button>
+          {!formUrl && (
+            <button
+              onClick={onConfirm}
+              disabled={!!error || isSubmitting}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSubmitting ? 'Preparing submission...' : 'Continue to Submission Form'}
+            </button>
+          )}
         </div>
       </div>
     </div>,

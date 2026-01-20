@@ -38,6 +38,7 @@ export function InstalledToolsView({ registryTools, n8nEnabled }: InstalledTools
   const [submittingWorkflow, setSubmittingWorkflow] = useState<N8nWorkflow | null>(null);
   const [sanitizationResult, setSanitizationResult] = useState<SanitizationResult | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [formUrl, setFormUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTool, setSelectedTool] = useState<ToolIndexEntry | null>(null);
   const [selectedWorkflow, setSelectedWorkflow] = useState<N8nWorkflow | null>(null);
@@ -175,16 +176,26 @@ export function InstalledToolsView({ registryTools, n8nEnabled }: InstalledTools
 
       const { form_url } = await response.json();
 
-      // Open submission form in new tab
-      window.open(form_url, '_blank');
+      // Try to open submission form in new tab
+      const popup = window.open(form_url, '_blank');
 
-      // Close dialog
-      setSubmittingWorkflow(null);
-      setSanitizationResult(null);
+      // Show success state with link (in case popup was blocked)
+      setSubmitError(null);
+      setFormUrl(form_url);
+      setIsSubmitting(false);
+
+      // If popup opened successfully, close dialog after short delay
+      if (popup && !popup.closed) {
+        setTimeout(() => {
+          setSubmittingWorkflow(null);
+          setSanitizationResult(null);
+          setFormUrl(null);
+        }, 1500);
+      }
+      // If popup blocked, dialog stays open showing the link
     } catch (err) {
       console.error('Submission error:', err);
       setSubmitError(err instanceof Error ? err.message : 'Submission failed');
-    } finally {
       setIsSubmitting(false);
     }
   }, [submittingWorkflow, sanitizationResult]);
@@ -193,6 +204,7 @@ export function InstalledToolsView({ registryTools, n8nEnabled }: InstalledTools
     setSubmittingWorkflow(null);
     setSanitizationResult(null);
     setSubmitError(null);
+    setFormUrl(null);
   }, []);
 
   const handleCardClick = useCallback(
@@ -288,6 +300,7 @@ export function InstalledToolsView({ registryTools, n8nEnabled }: InstalledTools
           result={sanitizationResult}
           error={submitError}
           isSubmitting={isSubmitting}
+          formUrl={formUrl}
           onConfirm={handleConfirmSubmission}
           onCancel={handleCancelSubmission}
         />
