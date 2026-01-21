@@ -36,6 +36,9 @@ export function ToolsPanel({ isOpen, onClose }: ToolsPanelProps) {
   const [selectedTool, setSelectedTool] = useState<ToolIndexEntry | null>(null);
   const [n8nEnabled, setN8nEnabled] = useState<boolean | null>(null);
   const [checkingN8n, setCheckingN8n] = useState(true);
+  const [installedSearchQuery, setInstalledSearchQuery] = useState('');
+  // Map of registry_id -> installed version
+  const [installedToolsMap, setInstalledToolsMap] = useState<Map<string, string>>(new Map());
 
   const checkN8nStatus = useCallback(async () => {
     setCheckingN8n(true);
@@ -52,13 +55,32 @@ export function ToolsPanel({ isOpen, onClose }: ToolsPanelProps) {
     }
   }, []);
 
+  const fetchInstalledTools = useCallback(async () => {
+    try {
+      const res = await fetch('/api/tools/n8n-workflows');
+      if (res.ok) {
+        const data = await res.json();
+        const map = new Map<string, string>();
+        for (const wf of data.workflows || []) {
+          if (wf.caal_registry_id && wf.caal_registry_version) {
+            map.set(wf.caal_registry_id, wf.caal_registry_version);
+          }
+        }
+        setInstalledToolsMap(map);
+      }
+    } catch {
+      // Ignore errors - just means we can't show installed status
+    }
+  }, []);
+
   // Load registry and check n8n status when panel opens
   useEffect(() => {
     if (isOpen) {
       refresh();
       checkN8nStatus();
+      fetchInstalledTools();
     }
-  }, [isOpen, refresh, checkN8nStatus]);
+  }, [isOpen, refresh, checkN8nStatus, fetchInstalledTools]);
 
   const handleInstall = useCallback((tool: ToolIndexEntry) => {
     setSelectedTool(null); // Close detail modal if open
@@ -70,8 +92,9 @@ export function ToolsPanel({ isOpen, onClose }: ToolsPanelProps) {
   }, []);
 
   const handleInstallComplete = useCallback(() => {
-    // Could refresh registry here if needed
-  }, []);
+    // Refresh installed tools map after install
+    fetchInstalledTools();
+  }, [fetchInstalledTools]);
 
   if (!isOpen) return null;
 
@@ -121,7 +144,7 @@ export function ToolsPanel({ isOpen, onClose }: ToolsPanelProps) {
             </button>
           </div>
 
-          {/* Search and filter (only for browse view) */}
+          {/* Search and filter (for browse view) */}
           {currentView === 'browse' && (
             <div className="space-y-3 px-6 py-4">
               {/* Search input */}
@@ -138,6 +161,22 @@ export function ToolsPanel({ isOpen, onClose }: ToolsPanelProps) {
 
               {/* Category filter */}
               <CategoryFilter selected={selectedCategory} onSelect={setCategory} />
+            </div>
+          )}
+
+          {/* Search (for installed view) */}
+          {currentView === 'installed' && (
+            <div className="px-6 py-4">
+              <div className="relative">
+                <MagnifyingGlass className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={installedSearchQuery}
+                  onChange={(e) => setInstalledSearchQuery(e.target.value)}
+                  placeholder="Search installed tools..."
+                  className="border-input bg-muted/50 w-full rounded-lg border py-2.5 pr-4 pl-10 text-sm"
+                />
+              </div>
             </div>
           )}
         </header>
@@ -167,13 +206,18 @@ export function ToolsPanel({ isOpen, onClose }: ToolsPanelProps) {
               error={error}
               searchQuery={searchQuery}
               n8nEnabled={n8nEnabled ?? false}
+              installedToolsMap={installedToolsMap}
               onInstall={handleInstall}
               onCardClick={handleCardClick}
               onRefresh={refresh}
               onClearSearch={() => setSearch('')}
             />
           ) : (
-            <InstalledToolsView registryTools={registryTools} n8nEnabled={n8nEnabled ?? false} />
+            <InstalledToolsView
+              registryTools={registryTools}
+              n8nEnabled={n8nEnabled ?? false}
+              searchQuery={installedSearchQuery}
+            />
           )}
         </main>
       </div>
@@ -185,6 +229,14 @@ export function ToolsPanel({ isOpen, onClose }: ToolsPanelProps) {
           onClose={() => setSelectedTool(null)}
           onInstall={handleInstall}
           n8nEnabled={n8nEnabled ?? false}
+          installedStatus={
+            selectedTool.id && installedToolsMap.has(selectedTool.id)
+              ? {
+                  version: installedToolsMap.get(selectedTool.id)!,
+                  upToDate: installedToolsMap.get(selectedTool.id) === selectedTool.version,
+                }
+              : undefined
+          }
         />
       )}
 

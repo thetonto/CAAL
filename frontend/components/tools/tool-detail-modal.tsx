@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArrowRight,
+  CheckCircle,
   CircleNotch,
   GithubLogo,
   Key,
@@ -23,14 +24,26 @@ import {
   type ToolManifest,
 } from '@/types/tools';
 
+interface InstalledStatus {
+  version: string;
+  upToDate: boolean;
+}
+
 interface ToolDetailModalProps {
   tool: ToolIndexEntry;
   onClose: () => void;
   onInstall: (tool: ToolIndexEntry) => void;
   n8nEnabled: boolean;
+  installedStatus?: InstalledStatus;
 }
 
-export function ToolDetailModal({ tool, onClose, onInstall, n8nEnabled }: ToolDetailModalProps) {
+export function ToolDetailModal({
+  tool,
+  onClose,
+  onInstall,
+  n8nEnabled,
+  installedStatus,
+}: ToolDetailModalProps) {
   const [manifest, setManifest] = useState<ToolManifest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -235,6 +248,21 @@ export function ToolDetailModal({ tool, onClose, onInstall, n8nEnabled }: ToolDe
               <Warning className="h-4 w-4" />
               Enable n8n in Settings to install tools
             </div>
+          ) : installedStatus?.upToDate ? (
+            <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-500/10 px-4 py-3 text-green-400">
+              <CheckCircle className="h-5 w-5" weight="fill" />
+              <span className="font-medium">Installed</span>
+              <span className="text-sm text-green-400/60">v{installedStatus.version}</span>
+            </div>
+          ) : installedStatus ? (
+            <button
+              onClick={() => onInstall(tool)}
+              disabled={loading || !!error}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-3 font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Update to v{tool.version}
+              <ArrowRight className="h-4 w-4" />
+            </button>
           ) : (
             <button
               onClick={() => onInstall(tool)}

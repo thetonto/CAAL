@@ -1,6 +1,6 @@
 'use client';
 
-import { Microphone, Tag } from '@phosphor-icons/react/dist/ssr';
+import { CheckCircle, Microphone, Tag } from '@phosphor-icons/react/dist/ssr';
 import {
   CATEGORY_COLORS,
   CATEGORY_LABELS,
@@ -12,11 +12,12 @@ import {
 
 interface ToolCardProps {
   tool: ToolIndexEntry;
+  isInstalled?: boolean;
   onInstall: (tool: ToolIndexEntry) => void;
   onClick: (tool: ToolIndexEntry) => void;
 }
 
-export function ToolCard({ tool, onInstall, onClick }: ToolCardProps) {
+export function ToolCard({ tool, isInstalled, onInstall, onClick }: ToolCardProps) {
   const categoryColor =
     CATEGORY_COLORS[tool.category as ToolCategory] || 'bg-gray-500/20 text-gray-400';
   const tierColor = TIER_COLORS[tool.tier] || 'bg-gray-500/20 text-gray-400';
@@ -77,15 +78,22 @@ export function ToolCard({ tool, onInstall, onClick }: ToolCardProps) {
       )}
 
       {/* Install button */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onInstall(tool);
-        }}
-        className="bg-primary text-primary-foreground hover:bg-primary/90 mt-auto rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-      >
-        Install
-      </button>
+      {isInstalled ? (
+        <div className="mt-auto flex items-center justify-center gap-2 rounded-lg bg-green-500/10 px-4 py-2 text-sm font-medium text-green-400">
+          <CheckCircle className="h-4 w-4" weight="fill" />
+          Installed
+        </div>
+      ) : (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onInstall(tool);
+          }}
+          className="bg-primary text-primary-foreground hover:bg-primary/90 mt-auto rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+        >
+          Install
+        </button>
+      )}
     </div>
   );
 }

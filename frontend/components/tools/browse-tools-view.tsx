@@ -10,6 +10,7 @@ interface BrowseToolsViewProps {
   error: string | null;
   searchQuery: string;
   n8nEnabled: boolean;
+  installedToolsMap: Map<string, string>;
   onInstall: (tool: ToolIndexEntry) => void;
   onCardClick: (tool: ToolIndexEntry) => void;
   onRefresh: () => void;
@@ -22,6 +23,7 @@ export function BrowseToolsView({
   error,
   searchQuery,
   n8nEnabled,
+  installedToolsMap,
   onInstall,
   onCardClick,
   onRefresh,
@@ -74,6 +76,7 @@ export function BrowseToolsView({
         <ToolCard
           key={tool.path}
           tool={tool}
+          isInstalled={tool.id ? installedToolsMap.has(tool.id) : false}
           onInstall={n8nEnabled ? onInstall : () => {}}
           onClick={onCardClick}
         />

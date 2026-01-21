@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowClockwise, Warning } from '@phosphor-icons/react/dist/ssr';
 import { type SanitizationResult, sanitizeWorkflow } from '@/lib/workflow-sanitizer';
 import type { ToolIndexEntry } from '@/types/tools';
@@ -28,9 +28,14 @@ type WorkflowStatus =
 interface InstalledToolsViewProps {
   registryTools: ToolIndexEntry[];
   n8nEnabled: boolean;
+  searchQuery?: string;
 }
 
-export function InstalledToolsView({ registryTools, n8nEnabled }: InstalledToolsViewProps) {
+export function InstalledToolsView({
+  registryTools,
+  n8nEnabled,
+  searchQuery = '',
+}: InstalledToolsViewProps) {
   const [workflows, setWorkflows] = useState<N8nWorkflow[]>([]);
   const [n8nBaseUrl, setN8nBaseUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -41,6 +46,7 @@ export function InstalledToolsView({ registryTools, n8nEnabled }: InstalledTools
   const [formUrl, setFormUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTool, setSelectedTool] = useState<ToolIndexEntry | null>(null);
+  const [selectedToolStatus, setSelectedToolStatus] = useState<WorkflowStatus | null>(null);
   const [selectedWorkflow, setSelectedWorkflow] = useState<N8nWorkflow | null>(null);
 
   const fetchWorkflows = useCallback(async () => {
@@ -214,15 +220,32 @@ export function InstalledToolsView({ registryTools, n8nEnabled }: InstalledTools
       const matchingTool = registryId ? registryTools.find((tool) => tool.id === registryId) : null;
 
       if (matchingTool) {
-        // Show registry tool detail modal
+        // Show registry tool detail modal with installed status
         setSelectedTool(matchingTool);
+        setSelectedToolStatus(getWorkflowStatus(workflow));
       } else {
         // Show custom workflow detail modal
         setSelectedWorkflow(workflow);
       }
     },
-    [registryTools]
+    [registryTools, getWorkflowStatus]
   );
+
+  // Filter and sort workflows
+  const filteredWorkflows = useMemo(() => {
+    let result = [...workflows];
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((workflow) => workflow.name.toLowerCase().includes(query));
+    }
+
+    // Sort alphabetically by name (A-Z)
+    result.sort((a, b) => a.name.localeCompare(b.name));
+
+    return result;
+  }, [workflows, searchQuery]);
 
   // Loading state
   if (loading) {
@@ -250,7 +273,7 @@ export function InstalledToolsView({ registryTools, n8nEnabled }: InstalledTools
     );
   }
 
-  // Empty state
+  // Empty state (no workflows at all)
   if (workflows.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -259,11 +282,20 @@ export function InstalledToolsView({ registryTools, n8nEnabled }: InstalledTools
     );
   }
 
+  // No results from search
+  if (filteredWorkflows.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <p className="text-muted-foreground">No tools match &quot;{searchQuery}&quot;</p>
+      </div>
+    );
+  }
+
   // Workflow grid
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {workflows.map((workflow) => (
+        {filteredWorkflows.map((workflow) => (
           <InstalledToolCard
             key={workflow.id}
             workflow={workflow}
@@ -278,9 +310,22 @@ export function InstalledToolsView({ registryTools, n8nEnabled }: InstalledTools
       {selectedTool && (
         <ToolDetailModal
           tool={selectedTool}
-          onClose={() => setSelectedTool(null)}
+          onClose={() => {
+            setSelectedTool(null);
+            setSelectedToolStatus(null);
+          }}
           onInstall={() => {}}
           n8nEnabled={n8nEnabled}
+          installedStatus={
+            selectedToolStatus?.type === 'registry'
+              ? {
+                  version: selectedToolStatus.upToDate
+                    ? selectedTool.version
+                    : selectedToolStatus.currentVersion,
+                  upToDate: selectedToolStatus.upToDate,
+                }
+              : undefined
+          }
         />
       )}
 
