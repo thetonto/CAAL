@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** A French-speaking user can interact with CAAL entirely in French with no English friction
-**Current focus:** Phase 2 - Frontend i18n (COMPLETE), ready for Phase 3
+**Current focus:** Phase 3 - Mobile i18n (Plan 1 complete, Plan 2 remaining)
 
 ## Current Position
 
-Phase: 2 of 4 (Frontend i18n) - COMPLETE
-Plan: 2 of 2 in current phase
-Status: Phase complete, verified, ready for Phase 3
-Last activity: 2026-01-25 - Phase 2 verified
+Phase: 3 of 4 (Mobile i18n)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-01-25 - Completed 03-01-PLAN.md (i18n Infrastructure)
 
-Progress: [###-------] 37% (3/8 plans)
+Progress: [####------] 50% (4/8 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 5 min
-- Total execution time: 14 min
+- Total execution time: 20 min
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [###-------] 37% (3/8 plans)
 |-------|-------|-------|----------|
 | 1. Foundation | 1/1 | 4 min | 4 min |
 | 2. Frontend i18n | 2/2 | 10 min | 5 min |
-| 3. Mobile i18n | 0/2 | - | - |
+| 3. Mobile i18n | 1/2 | 6 min | 6 min |
 | 4. Voice Pipeline | 0/3 | - | - |
 
 **Recent Trend:**
-- Last 5 plans: 4 min, 4 min, 6 min
+- Last 5 plans: 4 min, 4 min, 6 min, 6 min
 - Trend: Stable at ~5 min/plan
 
 *Updated after each plan completion*
@@ -54,6 +54,8 @@ Recent decisions affecting current work:
 - English messages as base with locale overlay for fallback - from 02-01
 - Technical terms stay in English: Ollama, Groq, Kokoro, Piper, STT, TTS, LLM, API, n8n - from 02-02
 - Language selector in Agent tab with save/cookie/reload flow - from 02-02
+- Output l10n to lib/l10n instead of deprecated synthetic-package - from 03-01
+- Relative imports for AppLocalizations (package:flutter_gen deprecated) - from 03-01
 
 ### Pending Todos
 
@@ -66,6 +68,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-25T18:30:05Z
-Stopped at: Completed 02-02-PLAN.md (UI Localization)
+Last session: 2026-01-25T18:54:34Z
+Stopped at: Completed 03-01-PLAN.md (i18n Infrastructure)
 Resume file: None
