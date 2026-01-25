@@ -13,7 +13,7 @@ This milestone adds full multilingual support to CAAL, enabling French-speaking 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Global language setting infrastructure with propagation to all components
-- [ ] **Phase 2: Frontend i18n** - Next.js localization with next-intl, EN/FR message files, language selector
+- [x] **Phase 2: Frontend i18n** - Next.js localization with next-intl, EN/FR message files, language selector
 - [ ] **Phase 3: Mobile i18n** - Flutter localization with intl, ARB files, language selector
 - [ ] **Phase 4: Voice Pipeline** - STT language param, TTS voice mapping, localized prompts
 
@@ -45,8 +45,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md - next-intl infrastructure setup (install, config, provider)
-- [ ] 02-02-PLAN.md - EN/FR message files and UI localization
+- [x] 02-01-PLAN.md - next-intl infrastructure setup (install, config, provider)
+- [x] 02-02-PLAN.md - EN/FR message files and UI localization
 
 ### Phase 3: Mobile i18n
 **Goal**: Users can interact with the mobile app entirely in their configured language
@@ -89,10 +89,10 @@ Note: Phases 2 and 3 can run in parallel after Phase 1 completes.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 1/1 | Complete | 2026-01-25 |
-| 2. Frontend i18n | 0/2 | Planned | - |
+| 2. Frontend i18n | 2/2 | Complete | 2026-01-25 |
 | 3. Mobile i18n | 0/2 | Not started | - |
 | 4. Voice Pipeline | 0/3 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-25 - Phase 2 planned*
+*Last updated: 2026-01-25 - Phase 2 complete*

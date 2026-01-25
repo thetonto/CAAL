@@ -15,12 +15,12 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Frontend (Next.js)
 
-- [ ] **FRONT-01**: next-intl infrastructure with App Router integration
-- [ ] **FRONT-02**: EN message file as reference (messages/en.json)
-- [ ] **FRONT-03**: FR message file complete (messages/fr.json)
-- [ ] **FRONT-04**: Settings panel fully localized
-- [ ] **FRONT-05**: Language selector dropdown in settings
-- [ ] **FRONT-06**: Static rendering preserved (setRequestLocale pattern)
+- [x] **FRONT-01**: next-intl infrastructure with App Router integration
+- [x] **FRONT-02**: EN message file as reference (messages/en.json)
+- [x] **FRONT-03**: FR message file complete (messages/fr.json)
+- [x] **FRONT-04**: Settings panel fully localized
+- [x] **FRONT-05**: Language selector dropdown in settings
+- [x] **FRONT-06**: Static rendering preserved (without i18n routing pattern)
 
 ### Mobile (Flutter)
 
@@ -76,12 +76,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-01 | Phase 1 | Complete |
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |
-| FRONT-01 | Phase 2 | Pending |
-| FRONT-02 | Phase 2 | Pending |
-| FRONT-03 | Phase 2 | Pending |
-| FRONT-04 | Phase 2 | Pending |
-| FRONT-05 | Phase 2 | Pending |
-| FRONT-06 | Phase 2 | Pending |
+| FRONT-01 | Phase 2 | Complete |
+| FRONT-02 | Phase 2 | Complete |
+| FRONT-03 | Phase 2 | Complete |
+| FRONT-04 | Phase 2 | Complete |
+| FRONT-05 | Phase 2 | Complete |
+| FRONT-06 | Phase 2 | Complete |
 | MOBILE-01 | Phase 3 | Pending |
 | MOBILE-02 | Phase 3 | Pending |
 | MOBILE-03 | Phase 3 | Pending |
@@ -100,4 +100,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-25*
-*Last updated: 2026-01-25 after initial definition*
+*Last updated: 2026-01-25 - Phase 2 requirements complete*
