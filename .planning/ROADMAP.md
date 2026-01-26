@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - Global language setting infrastructure with propagation to all components
 - [x] **Phase 2: Frontend i18n** - Next.js localization with next-intl, EN/FR message files, language selector
 - [x] **Phase 3: Mobile i18n** - Flutter localization with intl, ARB files, language selector
-- [ ] **Phase 4: Voice Pipeline** - STT language param, TTS voice mapping, localized prompts
+- [x] **Phase 4: Voice Pipeline** - STT language param, TTS voice mapping, localized prompts
 
 ## Phase Details
 
@@ -76,8 +76,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Localized prompts (EN/FR) and French date/time formatting
-- [ ] 04-02-PLAN.md — STT language param, TTS voice mapping, wake greetings wiring
+- [x] 04-01-PLAN.md — Localized prompts (EN/FR) and French date/time formatting
+- [x] 04-02-PLAN.md — STT language param, TTS voice mapping, wake greetings wiring
 
 ## Progress
 
@@ -90,8 +90,8 @@ Note: Phases 2 and 3 can run in parallel after Phase 1 completes.
 | 1. Foundation | 1/1 | Complete | 2026-01-25 |
 | 2. Frontend i18n | 2/2 | Complete | 2026-01-25 |
 | 3. Mobile i18n | 2/2 | Complete | 2026-01-25 |
-| 4. Voice Pipeline | 0/2 | Not started | - |
+| 4. Voice Pipeline | 2/2 | Complete | 2026-01-26 |
 
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-26 - Phase 4 planned*
+*Last updated: 2026-01-26 - Phase 4 complete — MILESTONE COMPLETE*

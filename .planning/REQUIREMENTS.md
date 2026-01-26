@@ -32,11 +32,11 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Voice Pipeline (Agent)
 
-- [ ] **VOICE-01**: Prompt files per language (prompt/en/default.md, prompt/fr/default.md)
-- [ ] **VOICE-02**: STT receives language parameter (Whisper/Groq)
-- [ ] **VOICE-03**: TTS voice mapping per language (Piper siwis-medium for FR)
-- [ ] **VOICE-04**: Agent reformulates tool responses in configured language
-- [ ] **VOICE-05**: Wake greetings localized per language
+- [x] **VOICE-01**: Prompt files per language (prompt/en/default.md, prompt/fr/default.md)
+- [x] **VOICE-02**: STT receives language parameter (Whisper/Groq)
+- [x] **VOICE-03**: TTS voice mapping per language (Piper siwis-medium for FR)
+- [x] **VOICE-04**: Agent reformulates tool responses in configured language
+- [x] **VOICE-05**: Wake greetings localized per language
 
 ## v2 Requirements
 
@@ -87,11 +87,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MOBILE-03 | Phase 3 | Complete |
 | MOBILE-04 | Phase 3 | Complete |
 | MOBILE-05 | Phase 3 | Complete |
-| VOICE-01 | Phase 4 | Pending |
-| VOICE-02 | Phase 4 | Pending |
-| VOICE-03 | Phase 4 | Pending |
-| VOICE-04 | Phase 4 | Pending |
-| VOICE-05 | Phase 4 | Pending |
+| VOICE-01 | Phase 4 | Complete |
+| VOICE-02 | Phase 4 | Complete |
+| VOICE-03 | Phase 4 | Complete |
+| VOICE-04 | Phase 4 | Complete |
+| VOICE-05 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 19 total
@@ -100,4 +100,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-25*
-*Last updated: 2026-01-25 - Phase 3 requirements complete*
+*Last updated: 2026-01-26 - All v1 requirements complete*
