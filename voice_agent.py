@@ -27,6 +27,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import random
 import sys
 import time
 
@@ -97,6 +98,33 @@ OLLAMA_THINK = os.getenv("OLLAMA_THINK", "false").lower() == "true"
 TIMEZONE_ID = os.getenv("TIMEZONE", "America/Los_Angeles")
 TIMEZONE_DISPLAY = os.getenv("TIMEZONE_DISPLAY", "Pacific Time")
 
+# Per-language voice and greeting mappings
+PIPER_VOICE_MAP = {
+    "en": "speaches-ai/piper-en_US-ryan-high",
+    "fr": "speaches-ai/piper-fr_FR-siwis-medium",
+}
+
+DEFAULT_WAKE_GREETINGS = {
+    "en": [
+        "Hey, what's up?",
+        "Hi there!",
+        "Yeah?",
+        "What can I do for you?",
+        "Hey!",
+        "Yo!",
+        "What's up?",
+    ],
+    "fr": [
+        "Salut, quoi de neuf ?",
+        "Bonjour !",
+        "Oui ?",
+        "Qu'est-ce que je peux faire pour toi ?",
+        "Salut !",
+        "Yo !",
+        "Quoi de neuf ?",
+    ],
+}
+
 # Import settings module for runtime-configurable values
 from caal import settings as settings_module
 
@@ -113,6 +141,8 @@ def get_runtime_settings() -> dict:
     user_settings = settings_module.load_user_settings()  # Only explicitly set values
 
     return {
+        # Language
+        "language": settings.get("language", "en"),
         # TTS settings
         "tts_provider": user_settings.get("tts_provider") or os.getenv("TTS_PROVIDER", "kokoro"),
         "tts_voice_kokoro": settings.get("tts_voice_kokoro") or os.getenv("TTS_VOICE", "am_puck"),
@@ -139,11 +169,12 @@ def get_runtime_settings() -> dict:
     }
 
 
-def load_prompt() -> str:
+def load_prompt(language: str = "en") -> str:
     """Load and populate prompt template with date context."""
     return settings_module.load_prompt_with_context(
         timezone_id=TIMEZONE_ID,
         timezone_display=TIMEZONE_DISPLAY,
+        language=language,
     )
 
 
