@@ -73,7 +73,7 @@ export function ToolCard({ tool, isInstalled, onInstall, onClick }: ToolCardProp
   return (
     <div
       onClick={() => onClick(tool)}
-      className="group bg-surface-2 hover:shadow-primary/5 relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-white/10 transition-all duration-300 hover:shadow-xl"
+      className="group bg-surface-2 hover:shadow-primary/5 relative flex min-h-[340px] cursor-pointer flex-col overflow-hidden rounded-2xl border border-white/10 transition-all duration-300 hover:shadow-xl"
     >
       {/* Watermark icon (faded, rotated) */}
       <div
@@ -94,7 +94,14 @@ export function ToolCard({ tool, isInstalled, onInstall, onClick }: ToolCardProp
           {/* Icon - custom icons are larger with no bg, fallbacks get colored bg */}
           {iconUrl ? (
             <div className="flex h-12 w-12 items-center justify-center">
-              <Image src={iconUrl} alt="" width={48} height={48} unoptimized />
+              <Image
+                src={iconUrl}
+                alt=""
+                width={48}
+                height={48}
+                className="max-h-12 w-auto"
+                unoptimized
+              />
             </div>
           ) : (
             <div
@@ -128,7 +135,7 @@ export function ToolCard({ tool, isInstalled, onInstall, onClick }: ToolCardProp
           <div className="mb-4 space-y-2">
             <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
               <Microphone className="h-3.5 w-3.5" />
-              <span>Voice triggers</span>
+              <span>Try saying</span>
             </div>
             <div className="border-primary/20 bg-primary/10 text-primary rounded-lg border p-3 text-sm italic">
               &ldquo;{tool.voice_triggers[0]}&rdquo;

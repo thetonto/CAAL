@@ -79,7 +79,7 @@ export const midnightTheme: Theme = {
     // Surface elevation - blue-tinted slate
     surfaceDeep: 'oklch(0.15 0.0398 265.75)', // Welcome screen background
     surface0: 'oklch(0.2077 0.0398 265.75)', // Panels - Tailwind slate-900
-    surface1: 'oklch(0.2795 0.0368 260.03)', // Panels - Tailwind slate-800
+    surface1: 'oklch(0.2795 0.0368 260.03)', // Panels & Modal- Tailwind slate-800
     surface2: 'oklch(0.32 0.035 260)', // Cards
     surface3: 'oklch(0.36 0.033 260)', // Hover states
     surface4: 'oklch(0.40 0.031 260)', // Highest elevation

@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowsClockwise, CheckCircle, ShareNetwork, Tag } from '@phosphor-icons/react/dist/ssr';
+import { ArrowsClockwise, CheckCircle, ShareNetwork } from '@phosphor-icons/react/dist/ssr';
 
 interface N8nWorkflow {
   id: string;
@@ -35,78 +35,51 @@ export function InstalledToolCard({
   onClick,
   onUpdate,
 }: InstalledToolCardProps) {
-  const getBadgeStyle = () => {
-    if (status.type === 'custom') {
-      return { color: 'bg-blue-500/20 text-blue-400', text: 'Custom' };
-    }
-    if (status.upToDate) {
-      return { color: 'bg-green-500/20 text-green-400', text: 'From Registry' };
-    }
-    return { color: 'bg-orange-500/20 text-orange-400', text: 'Update Available' };
-  };
-
-  const badge = getBadgeStyle();
-
   return (
     <div
       onClick={() => onClick(workflow)}
-      className="card-elevated group relative flex cursor-pointer flex-col rounded-xl p-4"
+      className="bg-surface-2 hover:shadow-primary/5 group relative flex min-h-[340px] cursor-pointer flex-col overflow-hidden rounded-2xl border border-white/10 transition-all duration-300 hover:shadow-xl"
     >
-      {/* Badge */}
-      <div className="mb-3 flex items-center justify-between">
-        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.color}`}>
-          {badge.text}
-        </span>
-        {workflow.active && (
-          <CheckCircle className="h-4 w-4 text-green-400" weight="fill" aria-label="Active" />
-        )}
-      </div>
-
-      {/* Title */}
-      <h3 className="mb-2 truncate font-semibold">{workflow.name.replace(/-/g, ' ')}</h3>
-
-      {/* Version info (for registry tools with updates) */}
-      {status.type === 'registry' && !status.upToDate && (
-        <p className="text-muted-foreground mb-2 text-xs">
-          v{status.currentVersion} → v{status.latestVersion}
-        </p>
-      )}
-
-      {/* Tags */}
-      {workflow.tags && workflow.tags.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          {workflow.tags.slice(0, 3).map((tag) => (
-            <div
-              key={tag}
-              className="bg-muted flex items-center gap-1 rounded-md px-2 py-0.5 text-xs"
-            >
-              <Tag className="h-3 w-3" />
-              {tag}
-            </div>
-          ))}
-          {workflow.tags.length > 3 && (
-            <span className="text-muted-foreground px-2 py-0.5 text-xs">
-              +{workflow.tags.length - 3}
-            </span>
+      {/* Content */}
+      <div className="flex flex-1 flex-col p-6">
+        {/* Header: Badge + Active indicator */}
+        <div className="mb-4 flex items-center justify-between">
+          <span className="rounded-full bg-green-500/20 px-2.5 py-1 text-xs font-medium text-green-400">
+            Custom
+          </span>
+          {workflow.active && (
+            <CheckCircle className="h-5 w-5 text-green-400" weight="fill" aria-label="Active" />
           )}
         </div>
-      )}
 
-      {/* Updated date */}
-      <p className="text-muted-foreground mb-4 text-xs">
-        Updated {new Date(workflow.updatedAt).toLocaleDateString()}
-      </p>
+        {/* Title */}
+        <h3 className="group-hover:text-primary mb-2 truncate text-lg font-bold transition-colors">
+          {workflow.name}
+        </h3>
 
-      {/* Share button (only for custom tools) */}
+        {/* Version info (for registry tools with updates) */}
+        {status.type === 'registry' && !status.upToDate && (
+          <p className="text-muted-foreground mb-2 text-xs">
+            v{status.currentVersion} → v{status.latestVersion}
+          </p>
+        )}
+
+        {/* Updated date */}
+        <p className="text-muted-foreground text-sm">
+          Updated {new Date(workflow.updatedAt).toLocaleDateString()}
+        </p>
+      </div>
+
+      {/* Share button - full width, outside content padding (matches ToolCard Install button) */}
       {status.type === 'custom' && (
         <button
           onClick={(e) => {
             e.stopPropagation();
             onShare(workflow);
           }}
-          className="btn-glow bg-primary-bg text-primary-foreground mt-auto flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium"
+          className="bg-primary-bg hover:bg-primary-bg/90 flex w-full items-center justify-center gap-2 py-4 font-bold text-white transition-colors"
         >
-          <ShareNetwork className="h-4 w-4" weight="bold" />
+          <ShareNetwork className="h-5 w-5" weight="bold" />
           Share to Registry
         </button>
       )}
@@ -118,9 +91,9 @@ export function InstalledToolCard({
             e.stopPropagation();
             onUpdate(workflow);
           }}
-          className="mt-auto flex items-center justify-center gap-2 rounded-lg bg-orange-500/20 px-4 py-2 text-sm font-medium text-orange-400 transition-colors hover:bg-orange-500/30"
+          className="flex w-full items-center justify-center gap-2 bg-orange-500/20 py-4 font-bold text-orange-400 transition-colors hover:bg-orange-500/30"
         >
-          <ArrowsClockwise className="h-4 w-4" weight="bold" />
+          <ArrowsClockwise className="h-5 w-5" weight="bold" />
           Update
         </button>
       )}

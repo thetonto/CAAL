@@ -5,6 +5,7 @@ import { ArrowClockwise, Warning } from '@phosphor-icons/react/dist/ssr';
 import { type SanitizationResult, sanitizeWorkflow } from '@/lib/workflow-sanitizer';
 import type { ToolIndexEntry } from '@/types/tools';
 import { InstalledToolCard } from './installed-tool-card';
+import { ToolCard } from './tool-card';
 import { ToolDetailModal } from './tool-detail-modal';
 import { WorkflowDetailModal } from './workflow-detail-modal';
 import { WorkflowSubmissionDialog } from './workflow-submission-dialog';
@@ -297,15 +298,36 @@ export function InstalledToolsView({
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredWorkflows.map((workflow) => (
-          <InstalledToolCard
-            key={workflow.id}
-            workflow={workflow}
-            status={getWorkflowStatus(workflow)}
-            onShare={handleShare}
-            onClick={handleCardClick}
-          />
-        ))}
+        {filteredWorkflows.map((workflow) => {
+          const registryId = workflow.caal_registry_id;
+          const matchingTool = registryId
+            ? registryTools.find((tool) => tool.id === registryId)
+            : null;
+
+          if (matchingTool) {
+            // Registry-installed tool - use rich ToolCard
+            return (
+              <ToolCard
+                key={workflow.id}
+                tool={matchingTool}
+                isInstalled={true}
+                onInstall={() => {}}
+                onClick={() => handleCardClick(workflow)}
+              />
+            );
+          }
+
+          // Custom workflow - use simpler InstalledToolCard
+          return (
+            <InstalledToolCard
+              key={workflow.id}
+              workflow={workflow}
+              status={getWorkflowStatus(workflow)}
+              onShare={handleShare}
+              onClick={handleCardClick}
+            />
+          );
+        })}
       </div>
 
       {/* Tool detail modal (for registry tools) */}
