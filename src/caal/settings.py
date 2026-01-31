@@ -32,6 +32,8 @@ PROMPT_DIR = Path(os.getenv("CAAL_PROMPT_DIR", _SCRIPT_DIR / "prompt"))
 DEFAULT_SETTINGS = {
     # First-launch flag
     "first_launch_completed": False,
+    # UI preferences
+    "theme": "midnight",  # "midnight" | "greySlate" | "light"
     # Agent identity
     "agent_name": "Cal",
     "prompt": "default",  # "default" | "custom"
@@ -51,7 +53,7 @@ DEFAULT_SETTINGS = {
     # TTS settings - voice selection (Kokoro uses voice param, Piper bakes voice into model)
     "tts_voice_kokoro": "am_puck",
     "tts_voice_piper": "speaches-ai/piper-en_US-ryan-high",
-    "temperature": 0.7,
+    "temperature": 0.15,
     # Ollama settings
     "ollama_host": "http://localhost:11434",
     "ollama_model": "ministral-3:8b",
@@ -66,7 +68,8 @@ DEFAULT_SETTINGS = {
     # n8n integration
     "n8n_enabled": False,
     "n8n_url": "",
-    "n8n_token": "",
+    "n8n_token": "",  # MCP token for tool discovery
+    "n8n_api_key": "",  # API key for workflow creation (Tool Registry)
     # Shared settings
     "max_turns": 20,
     "tool_cache_size": 3,

@@ -226,13 +226,7 @@ Extend CAAL with any API, database, or service via n8n workflows exposed through
 2. Set connection method to **Access Token** and copy the token
 3. In CAAL settings, enable n8n and enter your MCP URL and token
 
-**Import example workflows:**
-```bash
-cd n8n-workflows
-cp config.env.example config.env
-nano config.env  # Set your n8n IP and API key
-python setup.py  # Creates all workflows
-```
+**Browse and install community tools from the [CAAL Tool Registry](https://github.com/CoreWorxLab/caal-tools)** - install directly from the Tools panel in the web UI.
 
 See [docs/N8N-WORKFLOWS.md](docs/N8N-WORKFLOWS.md) for how to create your own workflows.
 

@@ -1,4 +1,4 @@
-import { Gear } from '@phosphor-icons/react/dist/ssr';
+import { Gear, Wrench } from '@phosphor-icons/react/dist/ssr';
 import { Button } from '@/components/livekit/button';
 
 function WelcomeImage() {
@@ -23,28 +23,41 @@ interface WelcomeViewProps {
   startButtonText: string;
   onStartCall: () => void;
   onOpenSettings?: () => void;
+  onOpenTools?: () => void;
 }
 
 export const WelcomeView = ({
   startButtonText,
   onStartCall,
   onOpenSettings,
+  onOpenTools,
   ref,
 }: React.ComponentProps<'div'> & WelcomeViewProps) => {
   return (
-    <div ref={ref} className="relative">
-      {/* Settings gear - top right */}
-      {onOpenSettings && (
-        <button
-          onClick={onOpenSettings}
-          className="text-muted-foreground hover:text-foreground hover:bg-muted fixed top-6 right-6 z-40 rounded-full p-2 transition-colors"
-          title="Settings"
-        >
-          <Gear className="h-6 w-6" weight="bold" />
-        </button>
-      )}
+    <div ref={ref} className="relative min-h-screen" style={{ background: 'var(--surface-deep)' }}>
+      {/* Top right buttons */}
+      <div className="fixed top-6 right-6 z-40 flex items-center gap-2">
+        {onOpenTools && (
+          <button
+            onClick={onOpenTools}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-full p-2 transition-colors"
+            title="Tools"
+          >
+            <Wrench className="h-6 w-6" weight="fill" />
+          </button>
+        )}
+        {onOpenSettings && (
+          <button
+            onClick={onOpenSettings}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-full p-2 transition-colors"
+            title="Settings"
+          >
+            <Gear className="h-6 w-6" weight="bold" />
+          </button>
+        )}
+      </div>
 
-      <section className="bg-background flex flex-col items-center justify-center text-center">
+      <section className="flex min-h-screen flex-col items-center justify-center text-center">
         <WelcomeImage />
 
         <p className="text-foreground max-w-prose pt-1 leading-6 font-medium">

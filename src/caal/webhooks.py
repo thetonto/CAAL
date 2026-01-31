@@ -46,7 +46,7 @@ from livekit.protocol.models import DataPacket
 from livekit.protocol.room import SendDataRequest
 from pydantic import BaseModel
 
-from . import settings as settings_module
+from . import registry_cache, settings as settings_module
 
 logger = logging.getLogger(__name__)
 
@@ -232,6 +232,51 @@ async def reload_tools(req: ReloadToolsRequest) -> ReloadToolsResponse:
     )
 
 
+# =============================================================================
+# Registry Cache Endpoints
+# =============================================================================
+
+
+class CacheRegistryEntryRequest(BaseModel):
+    """Request body for /cache-registry-entry endpoint."""
+
+    n8n_workflow_id: str
+    registry_id: str | None  # None = custom workflow
+    version: str | None = None
+
+
+class CacheRegistryEntryResponse(BaseModel):
+    """Response body for /cache-registry-entry endpoint."""
+
+    status: str
+    n8n_workflow_id: str
+
+
+@app.post("/cache-registry-entry", response_model=CacheRegistryEntryResponse)
+async def cache_registry_entry(req: CacheRegistryEntryRequest) -> CacheRegistryEntryResponse:
+    """Save a registry cache entry for an installed workflow.
+
+    Called by the frontend after successfully installing a tool from the registry.
+    Maps the n8n workflow ID to the CAAL registry ID and version.
+
+    Args:
+        req: CacheRegistryEntryRequest with workflow ID and registry info
+
+    Returns:
+        CacheRegistryEntryResponse with status
+    """
+    registry_cache.set_cached_entry(
+        n8n_workflow_id=req.n8n_workflow_id,
+        registry_id=req.registry_id,
+        version=req.version,
+    )
+
+    return CacheRegistryEntryResponse(
+        status="cached",
+        n8n_workflow_id=req.n8n_workflow_id,
+    )
+
+
 @app.post("/wake", response_model=WakeResponse)
 async def wake(req: WakeRequest) -> WakeResponse:
     """Handle wake word detection - greet the user.
@@ -372,7 +417,7 @@ async def update_settings(req: SettingsUpdateRequest) -> SettingsResponse:
 
     # Secret fields that should not be overwritten with empty values
     # (UI doesn't show these, so saving would clear them)
-    secret_fields = {"groq_api_key", "hass_token", "n8n_token"}
+    secret_fields = {"groq_api_key", "hass_token", "n8n_token", "n8n_api_key"}
 
     # Merge with new settings (only known keys)
     for key, value in req.settings.items():
@@ -778,6 +823,7 @@ class SetupCompleteRequest(BaseModel):
     n8n_enabled: bool | None = None
     n8n_url: str | None = None
     n8n_token: str | None = None
+    n8n_api_key: str | None = None
 
 
 class SetupCompleteResponse(BaseModel):
@@ -880,6 +926,8 @@ async def complete_setup(req: SetupCompleteRequest) -> SetupCompleteResponse:
                     current["n8n_url"] = req.n8n_url
                 if req.n8n_token:
                     current["n8n_token"] = req.n8n_token
+                if req.n8n_api_key:
+                    current["n8n_api_key"] = req.n8n_api_key
 
         # TTS provider and voice settings
         current["tts_provider"] = req.tts_provider
@@ -1058,6 +1106,275 @@ async def test_n8n(req: TestN8nRequest) -> TestConnectionResponse:
         )
     except Exception as e:
         return TestConnectionResponse(success=False, error=str(e))
+
+
+# =============================================================================
+# n8n Workflows Endpoint
+# =============================================================================
+
+
+class N8nWorkflowItem(BaseModel):
+    """Individual workflow in the n8n workflows list."""
+
+    id: str
+    name: str
+    active: bool
+    tags: list[str]
+    createdAt: str
+    updatedAt: str
+    caal_registry_id: str | None = None
+    caal_registry_version: str | None = None
+
+
+class N8nWorkflowsResponse(BaseModel):
+    """Response body for /n8n-workflows endpoint."""
+
+    workflows: list[N8nWorkflowItem]
+    n8n_base_url: str  # Base URL for building workflow links
+
+
+class N8nWorkflowDetailResponse(BaseModel):
+    """Response body for /n8n-workflow/{id} endpoint."""
+
+    workflow: dict  # Full workflow JSON
+
+
+@app.get("/n8n-workflows", response_model=N8nWorkflowsResponse)
+async def get_n8n_workflows() -> N8nWorkflowsResponse:
+    """Get all n8n workflows with CAAL registry tracking info.
+
+    This endpoint:
+    1. Fetches workflow list from n8n MCP server
+    2. Uses local cache for registry info (fast)
+    3. For uncached workflows, fetches full workflow to parse sticky note
+    4. Prunes cache entries for deleted workflows
+
+    Returns:
+        N8nWorkflowsResponse with list of workflows (including registry info) and n8n base URL
+
+    Raises:
+        HTTPException: 400 if n8n not configured, 500 if fetch fails
+    """
+    settings = settings_module.load_settings()
+
+    # Check if n8n is enabled and configured
+    n8n_enabled = settings.get("n8n_enabled", False)
+    n8n_mcp_url = settings.get("n8n_url", "")
+    n8n_token = settings.get("n8n_token", "")
+    n8n_api_key = settings.get("n8n_api_key", "")
+
+    if not n8n_enabled or not n8n_mcp_url:
+        raise HTTPException(
+            status_code=400,
+            detail="n8n not configured. Enable n8n in settings first.",
+        )
+
+    # Extract base n8n URL (strip /mcp-server/http suffix)
+    # e.g., http://192.168.86.47:5678/mcp-server/http -> http://192.168.86.47:5678
+    n8n_base_url = n8n_mcp_url.replace("/mcp-server/http", "").rstrip("/")
+
+    try:
+        # Prepare headers for MCP requests
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/event-stream",
+        }
+        if n8n_token:
+            headers["Authorization"] = f"Bearer {n8n_token}"
+
+        # Prepare headers for REST API requests
+        api_headers = {}
+        if n8n_api_key:
+            api_headers["X-N8N-API-KEY"] = n8n_api_key
+
+        workflows = []
+        workflow_list = []
+
+        async with httpx.AsyncClient() as client:
+            # Call search_workflows MCP tool
+            search_response = await client.post(
+                n8n_mcp_url,
+                headers=headers,
+                json={
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "tools/call",
+                    "params": {
+                        "name": "search_workflows",
+                        "arguments": {},
+                    },
+                },
+                timeout=30.0,
+            )
+            search_response.raise_for_status()
+
+            # Parse SSE response from n8n MCP server
+            search_text = search_response.text
+
+            # Parse SSE lines
+            for line in search_text.split('\n'):
+                if line.startswith('data: '):
+                    try:
+                        sse_data = json.loads(line[6:])  # Strip 'data: ' prefix
+                        if "result" in sse_data and "content" in sse_data["result"]:
+                            content = sse_data["result"]["content"]
+                            if isinstance(content, list) and len(content) > 0:
+                                # MCP returns content as array of TextContent
+                                workflow_data = json.loads(content[0]["text"])
+                                workflow_list = workflow_data.get("data", [])
+                                break
+                    except (json.JSONDecodeError, KeyError, IndexError) as e:
+                        logger.warning(f"Failed to parse SSE line: {e}")
+                        continue
+
+            logger.info(f"Found {len(workflow_list)} n8n workflows")
+
+            # Get active workflow IDs and prune deleted workflows from cache
+            active_ids = {wf["id"] for wf in workflow_list}
+            pruned = registry_cache.prune_deleted_workflows(active_ids)
+            if pruned > 0:
+                logger.info(f"Pruned {pruned} deleted workflows from cache")
+
+            # Identify uncached workflows
+            uncached_wf_ids = []
+            for wf in workflow_list:
+                cached = registry_cache.get_cached_entry(wf["id"])
+                if cached is None:
+                    uncached_wf_ids.append(wf["id"])
+
+            logger.info(f"Uncached workflows to fetch: {len(uncached_wf_ids)}")
+
+            # Fetch uncached workflows and parse sticky notes
+            for wf_id in uncached_wf_ids:
+                try:
+                    workflow_url = f"{n8n_base_url}/api/v1/workflows/{wf_id}"
+                    response = await client.get(
+                        workflow_url,
+                        headers=api_headers,
+                        timeout=30.0,
+                    )
+                    if response.status_code == 200:
+                        workflow_full = response.json()
+                        nodes = workflow_full.get("nodes", [])
+                        entry = registry_cache.parse_sticky_note_registry_info(nodes)
+                        registry_cache.set_cached_entry(
+                            wf_id,
+                            entry["registry_id"],
+                            entry["version"],
+                        )
+                    else:
+                        # Couldn't fetch, mark as custom to avoid refetching
+                        registry_cache.set_cached_entry(wf_id, None, None)
+                except Exception as e:
+                    logger.warning(f"Failed to fetch workflow {wf_id}: {e}")
+                    # Mark as custom to avoid refetching
+                    registry_cache.set_cached_entry(wf_id, None, None)
+
+            # Build response items with registry info from cache
+            for wf in workflow_list:
+                cached = registry_cache.get_cached_entry(wf["id"])
+                workflows.append(
+                    N8nWorkflowItem(
+                        id=wf["id"],
+                        name=wf["name"],
+                        active=wf.get("active", False),
+                        tags=wf.get("tags", []),
+                        createdAt=wf.get("createdAt", ""),
+                        updatedAt=wf.get("updatedAt", ""),
+                        caal_registry_id=cached["registry_id"] if cached else None,
+                        caal_registry_version=cached["version"] if cached else None,
+                    )
+                )
+
+        return N8nWorkflowsResponse(workflows=workflows, n8n_base_url=n8n_base_url)
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Cannot connect to n8n at {n8n_base_url}",
+        )
+    except Exception as e:
+        logger.error(f"Failed to fetch n8n workflows: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch workflows: {str(e)}",
+        )
+
+
+@app.get("/n8n-workflow/{workflow_id}", response_model=N8nWorkflowDetailResponse)
+async def get_n8n_workflow(workflow_id: str) -> N8nWorkflowDetailResponse:
+    """Get full workflow JSON for a single workflow.
+
+    Fetches complete workflow data via n8n REST API, including credentials.
+    Used for workflow submission to the Tool Registry.
+
+    Args:
+        workflow_id: The n8n workflow ID
+
+    Returns:
+        N8nWorkflowDetailResponse with full workflow JSON
+
+    Raises:
+        HTTPException: 400 if n8n not configured, 404 if not found, 500 if fetch fails
+    """
+    settings = settings_module.load_settings()
+
+    # Check if n8n is enabled and configured
+    n8n_enabled = settings.get("n8n_enabled", False)
+    n8n_mcp_url = settings.get("n8n_url", "")
+    n8n_api_key = settings.get("n8n_api_key", "")
+
+    if not n8n_enabled or not n8n_mcp_url:
+        raise HTTPException(
+            status_code=400,
+            detail="n8n not configured. Enable n8n in settings first.",
+        )
+
+    # Extract base n8n URL (strip /mcp-server/http suffix)
+    n8n_base_url = n8n_mcp_url.replace("/mcp-server/http", "").rstrip("/")
+
+    try:
+        async with httpx.AsyncClient() as client:
+            # Fetch workflow via n8n REST API
+            api_headers = {}
+            if n8n_api_key:
+                api_headers["X-N8N-API-KEY"] = n8n_api_key
+
+            workflow_url = f"{n8n_base_url}/api/v1/workflows/{workflow_id}"
+            logger.debug(f"Fetching workflow from: {workflow_url}")
+
+            response = await client.get(
+                workflow_url,
+                headers=api_headers,
+                timeout=30.0,
+            )
+
+            if response.status_code == 404:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Workflow {workflow_id} not found",
+                )
+
+            response.raise_for_status()
+
+            # Parse JSON response from REST API
+            workflow_full = response.json()
+
+            return N8nWorkflowDetailResponse(workflow=workflow_full)
+
+    except HTTPException:
+        raise
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Cannot connect to n8n at {n8n_base_url}",
+        )
+    except Exception as e:
+        logger.error(f"Failed to fetch workflow {workflow_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch workflow: {str(e)}",
+        )
 
 
 # =============================================================================

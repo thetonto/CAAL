@@ -100,6 +100,10 @@ class GroqProvider(LLMProvider):
         if "qwen" in self._model.lower():
             request_kwargs["reasoning_effort"] = "none"
 
+        # Use low reasoning effort for GPT-OSS models (faster responses)
+        if "gpt-oss" in self._model.lower():
+            request_kwargs["reasoning_effort"] = "low"
+
         if tools:
             request_kwargs["tools"] = tools
             request_kwargs["tool_choice"] = "auto"
@@ -152,6 +156,10 @@ class GroqProvider(LLMProvider):
         # Disable thinking for Qwen3 models (reduces latency)
         if "qwen" in self._model.lower():
             request_kwargs["reasoning_effort"] = "none"
+
+        # Use low reasoning effort for GPT-OSS models (faster responses)
+        if "gpt-oss" in self._model.lower():
+            request_kwargs["reasoning_effort"] = "low"
 
         # Include tools if provided (for validation of tool_calls in message history)
         if tools:

@@ -45,12 +45,12 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.269 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
+  --primary: #3fb184;
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted-foreground: oklch(0.7107 0.0351 256.79); /* Theme: Midnight - Tailwind slate-400 */
   --accent: oklch(0.371 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
@@ -70,6 +70,45 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.439 0 0);
+
+  /* ═══════════════════════════════════════════════════
+     SURFACE ELEVATION SYSTEM
+     Theme: Midnight (see frontend/lib/theme.ts)
+     Creates visual depth through layered blue-gray surfaces
+     ═══════════════════════════════════════════════════ */
+  --surface-deep: oklch(0.15 0.0398 265.75);
+  --surface-0: oklch(0.2077 0.0398 265.75);
+  --surface-1: oklch(0.2795 0.0368 260.03);
+  --surface-2: oklch(0.32 0.035 260);
+  --surface-3: oklch(0.36 0.033 260);
+  --surface-4: oklch(0.4 0.031 260);
+
+  /* ═══════════════════════════════════════════════════
+     SHADOW SYSTEM (n8n-inspired compound shadows)
+     Multiple shadow layers create realistic depth
+     ═══════════════════════════════════════════════════ */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.5), 0 8px 20px rgba(0, 0, 0, 0.3);
+  --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+
+  /* ═══════════════════════════════════════════════════
+     PRIMARY COLORS
+     Theme: Midnight (see frontend/lib/theme.ts)
+     Vibrant emerald green for all primary elements
+     ═══════════════════════════════════════════════════ */
+  --primary-bg: #3fb184;
+  --primary-text: #3fb184;
+
+  /* ═══════════════════════════════════════════════════
+     BORDER VARIATIONS
+     Subtle edge definition for depth perception
+     ═══════════════════════════════════════════════════ */
+  --border-subtle: oklch(1 0 0 / 4%);
+  --border-default: oklch(1 0 0 / 8%);
+  --border-emphasis: oklch(1 0 0 / 12%);
+  --border-top-highlight: oklch(1 0 0 / 6%);
 }
 
 @theme inline {
@@ -111,6 +150,27 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Surface elevation colors */
+  --color-surface-deep: var(--surface-deep);
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-surface-4: var(--surface-4);
+
+  /* Split primary colors for perceptual balance */
+  --color-primary-bg: var(--primary-bg);
+  --color-primary-text: var(--primary-text);
+
+  /* Shadow system */
+  --shadow-depth-sm: var(--shadow-sm);
+  --shadow-depth-md: var(--shadow-md);
+  --shadow-depth-lg: var(--shadow-lg);
+  --shadow-depth-xl: var(--shadow-xl);
+  --shadow-depth-inset: var(--shadow-inset);
+  --shadow-glow: var(--glow-primary);
+  --shadow-glow-intense: var(--glow-primary-intense);
 }
 
 @layer base {
@@ -157,5 +217,141 @@
     100% {
       background-position: 250% 0;
     }
+  }
+
+  /* ═══════════════════════════════════════════════════
+     DEPTH UTILITIES - n8n-inspired elevation system
+     ═══════════════════════════════════════════════════ */
+
+  /* Card with elevation - glass morphism effect */
+  .card-elevated {
+    background: rgb(from var(--surface-2) r g b / 0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-top-color: rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+  }
+
+  .card-elevated:hover {
+    background: rgb(from var(--surface-3) r g b / 0.75);
+    box-shadow:
+      0 25px 50px -12px rgba(0, 0, 0, 0.25),
+      0 0 15px rgba(69, 153, 124, 0.05);
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Modal/panel styling - glass morphism */
+  .panel-elevated {
+    background: rgb(from var(--surface-0) r g b / 0.5);
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* Recessed input fields */
+  .input-recessed {
+    background: var(--surface-1);
+    box-shadow: var(--shadow-inset);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .input-recessed:focus {
+    border-color: var(--border-emphasis);
+    outline: none;
+  }
+
+  /* Modern floating input fields (matches search box) */
+  .input-field {
+    background: rgb(from var(--surface-2) r g b / 0.5);
+    border: none;
+    border-radius: 0.75rem;
+    transition: all 0.15s ease;
+  }
+
+  .input-field:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary);
+  }
+
+  .input-field::placeholder {
+    color: var(--muted-foreground);
+  }
+
+  /* Select dropdown styling */
+  .select-field {
+    background: rgb(from var(--surface-2) r g b / 0.5);
+    border: none;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding-right: 2.5rem;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+  }
+
+  .select-field:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary);
+  }
+
+  /* Textarea styling */
+  .textarea-field {
+    background: rgb(from var(--surface-2) r g b / 0.5);
+    border: none;
+    border-radius: 0.75rem;
+    resize: vertical;
+    transition: all 0.15s ease;
+  }
+
+  .textarea-field:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary);
+  }
+
+  /* Primary button styling */
+  .btn-glow {
+    transition: background-color 0.2s ease;
+  }
+
+  .btn-glow:hover {
+    background-color: rgb(from var(--primary-bg) r g b / 0.9);
+  }
+
+  /* Section divider with subtle depth */
+  .section-divider {
+    border-top: 1px solid var(--border-subtle);
+    box-shadow: 0 1px 0 var(--border-top-highlight);
+  }
+
+  /* Inset container for grouped content */
+  .container-inset {
+    background: var(--surface-1);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-inset);
+    border-radius: 0.75rem;
+    padding: 1rem;
+  }
+
+  /* Category pill styling */
+  .pill-unselected {
+    background: rgb(from var(--surface-2) r g b / 0.5);
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+  }
+
+  .pill-unselected:hover {
+    background: rgb(from var(--surface-3) r g b / 0.6);
+  }
+
+  /* Hide scrollbar but keep scroll functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
   }
 }

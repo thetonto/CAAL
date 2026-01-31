@@ -4,6 +4,7 @@ import { TokenSource } from 'livekit-client';
 import { twMerge } from 'tailwind-merge';
 import { APP_CONFIG_DEFAULTS } from '@/app-config';
 import type { AppConfig } from '@/app-config';
+import { generateThemeCSS, getTheme } from './theme';
 
 export const CONFIG_ENDPOINT = process.env.NEXT_PUBLIC_APP_CONFIG_ENDPOINT;
 export const SANDBOX_ID = process.env.SANDBOX_ID;
@@ -79,11 +80,27 @@ export const getAppConfig = cache(async (headers: Headers): Promise<AppConfig> =
 /**
  * Get styles for the app
  * @param appConfig - The app configuration
- * @returns A string of styles
+ * @returns A string of styles that override CSS variables for theming
  */
 export function getStyles(appConfig: AppConfig) {
-  const { accent, accentDark } = appConfig;
+  const { theme, accent, accentDark } = appConfig;
 
+  // Use theme system if configured
+  if (theme) {
+    const themeObj = getTheme(theme);
+    const themeCSS = generateThemeCSS(themeObj);
+    const primary = themeObj.colors.primary;
+
+    // Inject all theme variables into .dark scope
+    return `.dark {
+      ${themeCSS}
+      --primary: ${primary};
+      --primary-hover: color-mix(in srgb, ${primary} 80%, #000);
+      --muted-foreground: ${themeObj.colors.mutedForeground};
+    }`;
+  }
+
+  // Fallback to legacy accent colors
   return [
     accent
       ? `:root { --primary: ${accent}; --primary-hover: color-mix(in srgb, ${accent} 80%, #000); }`

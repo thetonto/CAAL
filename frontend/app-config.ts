@@ -1,3 +1,5 @@
+import type { ThemeName } from './lib/theme';
+
 export interface AppConfig {
   pageTitle: string;
   pageDescription: string;
@@ -10,6 +12,9 @@ export interface AppConfig {
 
   logo: string;
   startButtonText: string;
+  theme?: ThemeName;  // Use theme system instead of individual accent colors
+
+  // Legacy support - deprecated, use theme instead
   accent?: string;
   logoDark?: string;
   accentDark?: string;
@@ -30,9 +35,7 @@ export const APP_CONFIG_DEFAULTS: AppConfig = {
   isPreConnectBufferEnabled: true,
 
   logo: '/cwl-logo-round.png',
-  accent: '#45997c',
-  logoDark: '/cwl-logo-round.png',
-  accentDark: '#45997c',
+  theme: 'midnight',  // Use Midnight theme
   startButtonText: 'Talk to CAAL',
 
   // for LiveKit Cloud Sandbox

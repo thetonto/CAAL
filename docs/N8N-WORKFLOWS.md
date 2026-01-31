@@ -16,29 +16,31 @@ CAAL transforms n8n workflows into LLM tools via the Model Context Protocol (MCP
 ┌─────────────────────────────────────────────────────────────────┐
 │                          CAAL Agent                             │
 │                                                                 │
-│  1. LLM sees tool: weather_get_forecast                         │
-│     Description: "Get weather. Params: location (required)"     │
+│  1. LLM sees tool: weather_aus                                  │
+│     Description: "Weather tool - forecast and current           │
+│     conditions for Australia. Parameters: action..."            │
 │                                                                 │
-│  2. LLM decides to call tool with: {"location": "Seattle"}      │
+│  2. LLM decides to call tool with:                              │
+│     {"action": "current", "location": "Sydney"}                 │
 └─────────────────────────────┬───────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                         n8n Workflow                            │
+│                         n8n Workflow                             │
 │                                                                 │
-│  POST http://n8n:5678/webhook/weather_get_forecast              │
-│  Body: {"location": "Seattle"}                                  │
+│  POST http://n8n:5678/webhook/weather_aus                       │
+│  Body: {"action": "current", "location": "Sydney"}              │
 │                                                                 │
 │  Returns: {                                                     │
-│    "message": "Seattle is 52 degrees and cloudy",               │
-│    "weather": {"temp": 52, "condition": "cloudy"}               │
+│    "message": "Sydney is 24 degrees and sunny",                 │
+│    "weather": {"temp": 24, "condition": "sunny"}                │
 │  }                                                              │
 └─────────────────────────────┬───────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Voice Response                           │
-│                "Seattle is 52 degrees and cloudy"               │
+│                  "Sydney is 24 degrees and sunny"               │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -58,21 +60,33 @@ When CAAL starts (or when `/reload-tools` is called), it discovers workflows via
 
 The **webhook node's `notes` field** becomes the tool description the LLM sees. This is how the LLM knows what the tool does and what parameters to pass.
 
-Example webhook node notes:
+Descriptions should start broad then scope, and clearly document parameters:
+
 ```
-Get current weather for a location.
+Weather tool - forecast and current conditions for Australia.
+
 Parameters:
-- location (required): City name or zip code
-- units (optional): "metric" or "imperial", defaults to imperial
+- action (required): 'forecast' or 'current'
+- location (required): city, suburb, or postcode
+- days (optional, default 7): forecast days ahead (1-7), use for 'next week' queries
+- target_day (optional): specific weekday like 'Monday', use only for 'on Friday' style queries
+
+Examples: 'Sydney weather', 'Melbourne next week' (days=7), 'Brisbane Thursday' (target_day='Thursday')
 ```
 
-The LLM reads this and knows to call the tool with `{"location": "Seattle", "units": "metric"}`.
+**Key principles:**
+- **Start broad, then scope** - "Weather tool - forecast for Australia" not "Australian weather tool" (the latter won't match "Sydney weather" queries)
+- **Use exact parameter names** - `query` not "search term", `days` not "number of days"
+- **Disambiguate similar params** - explain when to use `days` vs `target_day`
+- **Include examples** mapping natural language to parameters
+
+The LLM reads this and knows to call the tool with `{"action": "current", "location": "Sydney"}`.
 
 ### 3. Execution
 
 When the LLM decides to call a tool:
 
-1. CAAL receives the tool call with arguments (e.g., `weather_get_forecast` with `{"location": "Seattle"}`)
+1. CAAL receives the tool call with arguments
 2. CAAL POSTs to `{n8n_url}/webhook/{workflow_name}` with the arguments as JSON body
 3. The n8n workflow executes and returns a response
 4. CAAL speaks the `message` field to the user
@@ -107,83 +121,14 @@ Now if the user asks "What about the Seahawks game?", the LLM can check the cach
 
 ### 5. Naming Convention
 
-Workflow names follow the pattern: `service_action_object` (snake_case)
+**Tool Suites** (preferred for related actions) - a single workflow handling multiple actions via a Switch node:
+- Name is just `service` (snake_case): `google_tasks`, `truenas`, `espn_nhl`
+- Routes on an `action` parameter: `get`, `add`, `complete`, etc.
 
-| Workflow Name | Description |
-|---------------|-------------|
-| `weather_get_forecast` | Get weather forecast |
-| `calendar_get_events` | Get calendar events |
-| `radarr_search_movies` | Search Radarr library |
-| `espn_get_nfl_scores` | Get NFL scores from ESPN |
+**Individual Tools** - single-purpose tools:
+- Name follows `service_action_object`: `weather_get_forecast`, `date_calculate_days_until`
 
-**Important:** The workflow name becomes both:
-- The webhook path: `/webhook/weather_get_forecast`
-- The tool name the LLM sees: `weather_get_forecast`
-
----
-
-## Creating a Workflow
-
-### Step 1: Create Webhook Trigger
-
-1. Add a **Webhook** node as the trigger
-2. Set **HTTP Method** to `POST`
-3. Set **Path** to your workflow name (e.g., `weather_get_forecast`)
-4. Set **Response Mode** to "Using 'Respond to Webhook' Node"
-
-### Step 2: Add Tool Description
-
-In the webhook node's **Notes** field, describe:
-- What the tool does
-- Required parameters
-- Optional parameters with defaults
-
-```
-Get current weather for a location.
-
-Parameters:
-- location (required): City name or zip code
-- units (optional): "metric" or "imperial", defaults to imperial
-
-Returns current temperature and conditions.
-```
-
-### Step 3: Build Your Logic
-
-Add nodes to:
-1. Call external APIs (HTTP Request node)
-2. Process/filter data (Code node)
-3. Format response for voice (Code node)
-
-### Step 4: Format Voice Response
-
-In your final Code node before responding:
-
-```javascript
-const data = $input.item.json;
-
-// Format for voice - keep it brief and natural
-const message = `It's ${data.temp} degrees and ${data.condition} in ${data.location}`;
-
-return {
-  message: message,
-  weather: {
-    temp: data.temp,
-    condition: data.condition,
-    location: data.location
-  }
-};
-```
-
-### Step 5: Respond to Webhook
-
-Add a **Respond to Webhook** node at the end to return the response.
-
-### Step 6: Enable MCP
-
-1. Go to **Workflow Settings** (gear icon)
-2. Enable **"Available in MCP"**
-3. Save and activate the workflow
+The workflow name becomes both the webhook path (`/webhook/google_tasks`) and the tool name the LLM sees.
 
 ---
 
@@ -254,7 +199,7 @@ The announce call:
 
 ### Configure CAAL
 
-In CAAL's Settings Panel → Integrations → n8n:
+In CAAL's Settings Panel > Integrations > n8n:
 
 1. Enable n8n
 2. Enter your n8n host URL (e.g., `http://192.168.1.100:5678`)
@@ -285,63 +230,8 @@ Or say "reload tools" to the voice assistant.
 
 ---
 
-## Example Workflow
+## Creating & Sharing Tools
 
-Here's a complete weather workflow:
+Browse community tools or submit your own via the **[CAAL Tool Registry](https://github.com/CoreWorxLab/caal-tools)**. Tools can be installed directly from the Tools panel in the CAAL web UI.
 
-```json
-{
-  "name": "weather_get_forecast",
-  "nodes": [
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "weather_get_forecast",
-        "responseMode": "responseNode"
-      },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [0, 0],
-      "webhookId": "weather_get_forecast",
-      "notes": "Get current weather.\n\nParameters:\n- location (required): City name"
-    },
-    {
-      "parameters": {
-        "url": "=https://wttr.in/{{ $json.location }}?format=j1"
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [200, 0]
-    },
-    {
-      "parameters": {
-        "jsCode": "const weather = $input.item.json.current_condition[0];\nconst location = $input.item.json.nearest_area[0].areaName[0].value;\n\nreturn {\n  message: `${location} is ${weather.temp_F} degrees and ${weather.weatherDesc[0].value.toLowerCase()}`,\n  weather: {\n    location: location,\n    temp: parseInt(weather.temp_F),\n    condition: weather.weatherDesc[0].value\n  }\n};"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [400, 0]
-    },
-    {
-      "parameters": {},
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [600, 0]
-    }
-  ],
-  "connections": {
-    "Webhook": { "main": [[{ "node": "HTTP Request", "index": 0 }]] },
-    "HTTP Request": { "main": [[{ "node": "Code", "index": 0 }]] },
-    "Code": { "main": [[{ "node": "Respond to Webhook", "index": 0 }]] }
-  },
-  "settings": {
-    "availableInMCP": true
-  }
-}
-```
-
----
-
-## Further Reading
-
-- [n8n-workflows/README.md](../n8n-workflows/README.md) - Pre-built workflows and setup script
-- [n8n-workflows/caal-workflow-builder-seed.md](../n8n-workflows/caal-workflow-builder-seed.md) - AI prompt for building workflows
+See the [CONTRIBUTING guide](https://github.com/CoreWorxLab/caal-tools/blob/main/CONTRIBUTING.md) for how to build and submit tools.

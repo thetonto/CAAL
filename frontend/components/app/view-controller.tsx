@@ -7,6 +7,7 @@ import type { AppConfig } from '@/app-config';
 import { SessionView } from '@/components/app/session-view';
 import { WelcomeView } from '@/components/app/welcome-view';
 import { SettingsPanel } from '@/components/settings/settings-panel';
+import { ToolsPanel } from '@/components/tools';
 
 const MotionWelcomeView = motion.create(WelcomeView);
 const MotionSessionView = motion.create(SessionView);
@@ -36,6 +37,7 @@ interface ViewControllerProps {
 export function ViewController({ appConfig }: ViewControllerProps) {
   const { isConnected, start } = useSessionContext();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
 
   return (
     <>
@@ -48,6 +50,7 @@ export function ViewController({ appConfig }: ViewControllerProps) {
             startButtonText={appConfig.startButtonText}
             onStartCall={start}
             onOpenSettings={() => setSettingsOpen(true)}
+            onOpenTools={() => setToolsOpen(true)}
           />
         )}
         {/* Session view */}
@@ -58,6 +61,9 @@ export function ViewController({ appConfig }: ViewControllerProps) {
 
       {/* Settings panel */}
       <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+
+      {/* Tools panel */}
+      <ToolsPanel isOpen={toolsOpen} onClose={() => setToolsOpen(false)} />
     </>
   );
 }

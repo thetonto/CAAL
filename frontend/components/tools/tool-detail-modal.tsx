@@ -1,0 +1,414 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import Image from 'next/image';
+import {
+  ArrowRight,
+  ArrowSquareOut,
+  ChatCircle,
+  CheckCircle,
+  CheckSquare,
+  CircleNotch,
+  Code,
+  GithubLogo,
+  HardDrives,
+  House,
+  Key,
+  Microphone,
+  Package,
+  PlayCircle,
+  PuzzlePiece,
+  Stack,
+  Tag,
+  Trophy,
+  Warning,
+  Wrench,
+  X,
+} from '@phosphor-icons/react/dist/ssr';
+import {
+  CATEGORY_LABELS,
+  TIER_LABELS,
+  type ToolCategory,
+  type ToolIndexEntry,
+  type ToolManifest,
+} from '@/types/tools';
+
+// Category icon styles (matching tool-card.tsx)
+const CATEGORY_ICON_STYLES: Record<ToolCategory, { bg: string; text: string }> = {
+  'smart-home': { bg: 'bg-green-500/10', text: 'text-green-400' },
+  media: { bg: 'bg-red-500/10', text: 'text-red-400' },
+  homelab: { bg: 'bg-purple-500/10', text: 'text-purple-400' },
+  productivity: { bg: 'bg-blue-500/10', text: 'text-blue-400' },
+  developer: { bg: 'bg-cyan-500/10', text: 'text-cyan-400' },
+  utilities: { bg: 'bg-slate-500/10', text: 'text-slate-400' },
+  sports: { bg: 'bg-orange-500/10', text: 'text-orange-400' },
+  social: { bg: 'bg-pink-500/10', text: 'text-pink-400' },
+  other: { bg: 'bg-yellow-500/10', text: 'text-yellow-400' },
+};
+
+// Fallback Phosphor icons per category
+const CATEGORY_ICONS: Record<
+  ToolCategory,
+  React.ComponentType<{ className?: string; weight?: 'fill' | 'regular' | 'bold' }>
+> = {
+  'smart-home': House,
+  media: PlayCircle,
+  homelab: HardDrives,
+  productivity: CheckSquare,
+  developer: Code,
+  utilities: Wrench,
+  sports: Trophy,
+  social: ChatCircle,
+  other: PuzzlePiece,
+};
+
+interface InstalledStatus {
+  version: string;
+  upToDate: boolean;
+  workflowId?: string;
+  n8nBaseUrl?: string;
+}
+
+interface ToolDetailModalProps {
+  tool: ToolIndexEntry;
+  onClose: () => void;
+  onInstall: (tool: ToolIndexEntry) => void;
+  n8nEnabled: boolean;
+  installedStatus?: InstalledStatus;
+}
+
+export function ToolDetailModal({
+  tool,
+  onClose,
+  onInstall,
+  n8nEnabled,
+  installedStatus,
+}: ToolDetailModalProps) {
+  const [manifest, setManifest] = useState<ToolManifest | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const category = tool.category as ToolCategory;
+  const iconStyles = CATEGORY_ICON_STYLES[category] || CATEGORY_ICON_STYLES.other;
+  const IconComponent = CATEGORY_ICONS[category] || CATEGORY_ICONS.other;
+  const categoryLabel = CATEGORY_LABELS[category] || tool.category;
+  const tierLabel = TIER_LABELS[tool.tier] || tool.tier;
+
+  // Registry icon URL (when tool.icon exists)
+  const iconUrl = tool.icon
+    ? `https://raw.githubusercontent.com/CoreWorxLab/caal-tools/main/icons/${tool.icon}`
+    : null;
+
+  useEffect(() => {
+    async function fetchManifest() {
+      try {
+        const res = await fetch(`/api/tools/workflow?path=${encodeURIComponent(tool.path)}`);
+        if (!res.ok) {
+          throw new Error('Failed to fetch tool details');
+        }
+        const data = await res.json();
+        setManifest(data.manifest);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchManifest();
+  }, [tool.path]);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex items-center justify-center">
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Modal */}
+      <div className="bg-surface-1 relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border shadow-2xl">
+        {/* Watermark icon (faded, rotated) */}
+        <div
+          className={`pointer-events-none absolute -top-8 -right-8 opacity-[0.03] ${iconStyles.text}`}
+          style={{ fontSize: '200px', transform: 'rotate(-15deg)' }}
+        >
+          {iconUrl ? (
+            <Image src={iconUrl} alt="" width={200} height={200} unoptimized />
+          ) : (
+            <IconComponent className="h-[200px] w-[200px]" />
+          )}
+        </div>
+
+        {/* Header */}
+        <div className="relative z-10 shrink-0 border-b border-white/10 px-6 py-5">
+          <div className="flex items-start gap-4">
+            {/* Icon */}
+            {iconUrl ? (
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center">
+                <Image
+                  src={iconUrl}
+                  alt=""
+                  width={56}
+                  height={56}
+                  className="max-h-14 w-auto"
+                  unoptimized
+                />
+              </div>
+            ) : (
+              <div
+                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${iconStyles.bg}`}
+              >
+                <IconComponent className={`h-7 w-7 ${iconStyles.text}`} weight="fill" />
+              </div>
+            )}
+
+            {/* Title and badges */}
+            <div className="min-w-0 flex-1">
+              <div className="mb-1.5 flex items-center gap-2">
+                <span className="text-muted-foreground text-[10px] font-bold tracking-wider uppercase">
+                  {categoryLabel}
+                </span>
+                <span className="text-muted-foreground">•</span>
+                <span className="text-muted-foreground rounded border border-white/5 bg-white/5 px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
+                  {tierLabel}
+                </span>
+              </div>
+              <h2 className="text-xl font-bold">
+                {tool.friendlyName || tool.name.replace(/-/g, ' ')}
+              </h2>
+            </div>
+
+            {/* Close button */}
+            <button
+              onClick={onClose}
+              className="text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 rounded-full p-1.5 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <CircleNotch className="text-primary h-8 w-8 animate-spin" />
+              <p className="text-muted-foreground mt-4">Loading details...</p>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Warning className="h-8 w-8 text-red-500" />
+              <p className="text-muted-foreground mt-4">{error}</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Description */}
+              <div>
+                <p className="text-muted-foreground leading-relaxed">
+                  {manifest?.description || tool.description}
+                </p>
+              </div>
+
+              {/* Tool Suite indicator */}
+              {(manifest?.toolSuite || tool.toolSuite) && (
+                <div>
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <Stack className="h-4 w-4 text-cyan-400" />
+                    Tool Suite
+                  </h3>
+                  <p className="text-muted-foreground mb-3 text-sm">
+                    This is a multi-action tool that can perform several related tasks.
+                  </p>
+                  {(manifest?.actions || tool.actions) && (
+                    <div className="flex flex-wrap gap-2">
+                      {(manifest?.actions || tool.actions)?.map((action) => (
+                        <span
+                          key={action}
+                          className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-sm text-cyan-300 capitalize"
+                        >
+                          {action}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Voice triggers */}
+              {manifest?.voice_triggers && manifest.voice_triggers.length > 0 && (
+                <div>
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <Microphone className="text-primary h-4 w-4" />
+                    Try Saying
+                  </h3>
+                  <div className="space-y-2">
+                    {manifest.voice_triggers.map((trigger, i) => (
+                      <div
+                        key={i}
+                        className="border-primary/20 bg-primary/10 text-primary rounded-lg border p-3 text-sm italic"
+                      >
+                        &ldquo;Hey Cal, {trigger}&rdquo;
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Required services */}
+              {manifest?.required_services && manifest.required_services.length > 0 && (
+                <div>
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <Package className="h-4 w-4 text-purple-400" />
+                    Required Services
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {manifest.required_services.map((service) => (
+                      <span
+                        key={service}
+                        className="rounded-lg border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-sm text-purple-300"
+                      >
+                        {service}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Required variables */}
+              {manifest?.required_variables && manifest.required_variables.length > 0 && (
+                <div>
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <Key className="h-4 w-4 text-orange-400" />
+                    Configuration Required
+                  </h3>
+                  <div className="space-y-3 rounded-lg border border-white/5 bg-white/5 p-4">
+                    {manifest.required_variables.map((v) => (
+                      <div key={v.name} className="last:mb-0">
+                        <code className="text-xs font-semibold text-orange-300">{v.name}</code>
+                        <p className="text-muted-foreground mt-0.5 text-sm">{v.description}</p>
+                        <p className="text-muted-foreground/60 mt-1 text-xs">
+                          Example: <code className="text-orange-300/60">{v.example}</code>
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Required credentials */}
+              {manifest?.required_credentials && manifest.required_credentials.length > 0 && (
+                <div>
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <Key className="h-4 w-4 text-green-400" />
+                    n8n Credentials Required
+                  </h3>
+                  <div className="space-y-3 rounded-lg border border-white/5 bg-white/5 p-4">
+                    {manifest.required_credentials.map((c) => (
+                      <div key={c.name}>
+                        <p className="text-sm font-medium">{c.description}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {c.credential_type}
+                          {c.node && ` • ${c.node}`}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tags */}
+              {manifest?.tags && manifest.tags.length > 0 && (
+                <div>
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <Tag className="text-muted-foreground h-4 w-4" />
+                    Tags
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {manifest.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-muted-foreground rounded-md border border-white/5 bg-white/5 px-2 py-0.5 text-[10px] font-semibold tracking-tight uppercase"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Author */}
+              {manifest?.author && (
+                <div>
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <GithubLogo className="text-muted-foreground h-4 w-4" />
+                    Author
+                  </h3>
+                  <a
+                    href={`https://github.com/${manifest.author.github}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary text-sm hover:underline"
+                  >
+                    @{manifest.author.github}
+                  </a>
+                </div>
+              )}
+
+              {/* n8n Workflow Link (when installed) */}
+              {installedStatus?.workflowId && installedStatus?.n8nBaseUrl && (
+                <div>
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <ArrowSquareOut className="text-muted-foreground h-4 w-4" />
+                    Workflow
+                  </h3>
+                  <a
+                    href={`${installedStatus.n8nBaseUrl}/workflow/${installedStatus.workflowId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary inline-flex items-center gap-2 text-sm hover:underline"
+                  >
+                    Open in n8n
+                    <ArrowSquareOut className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="relative z-10 shrink-0 border-t border-white/10 px-6 py-4">
+          {!n8nEnabled ? (
+            <div className="flex items-center justify-center gap-2 rounded-lg border border-orange-500/20 bg-orange-500/10 px-4 py-3 text-sm text-orange-400">
+              <Warning className="h-4 w-4" />
+              Enable n8n in Settings to install tools
+            </div>
+          ) : installedStatus?.upToDate ? (
+            <div className="flex items-center justify-center gap-2 rounded-lg bg-green-500/10 px-4 py-3 text-green-400">
+              <CheckCircle className="h-5 w-5" weight="fill" />
+              <span className="font-medium">Installed</span>
+              <span className="text-sm text-green-400/60">v{installedStatus.version}</span>
+            </div>
+          ) : installedStatus ? (
+            <button
+              onClick={() => onInstall(tool)}
+              disabled={loading || !!error}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-3 font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Update to v{tool.version}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          ) : (
+            <button
+              onClick={() => onInstall(tool)}
+              disabled={loading || !!error}
+              className="bg-primary-bg hover:bg-primary-bg/90 disabled:bg-muted disabled:text-muted-foreground flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 font-medium text-white transition-colors disabled:cursor-not-allowed"
+            >
+              Install Tool
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
