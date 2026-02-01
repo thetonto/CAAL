@@ -505,12 +505,18 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
 
   const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLocale = e.target.value;
-    // Switch TTS provider based on language (kokoro=English, piper=French)
+    // Switch TTS provider based on language (kokoro=English, piper=French/Italian/etc.)
     const newTtsProvider = newLocale === 'en' ? 'kokoro' : 'piper';
+    const piperModels: Record<string, string> = {
+      en: 'speaches-ai/piper-en_US-ryan-high',
+      fr: 'speaches-ai/piper-fr_FR-siwis-medium',
+      it: 'speaches-ai/piper-it_IT-paola-medium',
+    };
     const updatedSettings = {
       ...settings,
       language: newLocale,
       tts_provider: newTtsProvider,
+      tts_voice_piper: piperModels[newLocale] || piperModels['en'],
     };
     try {
       await fetch('/api/settings', {
@@ -520,19 +526,13 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
       });
 
       // Pre-download the Piper TTS model for non-English languages (fire-and-forget)
-      if (newTtsProvider === 'piper') {
-        const piperModels: Record<string, string> = {
-          fr: 'speaches-ai/piper-fr_FR-siwis-medium',
-          it: 'speaches-ai/piper-it_IT-paola-medium',
-        };
-        const modelId = piperModels[newLocale];
-        if (modelId) {
-          fetch('/api/download-piper-model', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model_id: modelId }),
-          }).catch(() => {}); // Best-effort, agent retries if not ready
-        }
+      const modelId = piperModels[newLocale];
+      if (newTtsProvider === 'piper' && modelId) {
+        fetch('/api/download-piper-model', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model_id: modelId }),
+        }).catch(() => {}); // Best-effort, agent retries if not ready
       }
 
       document.cookie = `CAAL_LOCALE=${newLocale};path=/;max-age=31536000;SameSite=Lax`;
