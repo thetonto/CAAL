@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-05)
 ## Current Position
 
 Phase: 5 of 7 (Extract & Add EN Keys)
-Plan: Not yet planned
-Status: Ready to plan
-Last activity: 2026-02-05 — Milestone v1.1 roadmap created
+Plan: 1 of 1 complete
+Status: Phase complete
+Last activity: 2026-02-05 — Completed 05-01-PLAN.md
 
-Progress: [░░░░░░░░░░] 0% (0/3 phases)
+Progress: [███░░░░░░░] 33% (1/3 phases)
 
 ## Accumulated Context
 
@@ -24,6 +24,11 @@ Progress: [░░░░░░░░░░] 0% (0/3 phases)
 - French uses tu/toi register for natural voice assistant tone
 - Technical terms (Ollama, Groq, Piper) stay in English
 - next-intl for frontend i18n
+
+(Phase 05-01)
+- Tools.share.* namespace for submission dialog strings
+- Tools.workflow.* namespace for detail modal strings
+- Arrow symbol in variable hints is UI formatting, not translatable text
 
 ### Pending Todos
 
@@ -35,6 +40,6 @@ None open.
 
 ## Session Continuity
 
-Last session: 2026-02-05
-Stopped at: Milestone initialization
+Last session: 2026-02-05T04:03:56Z
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
