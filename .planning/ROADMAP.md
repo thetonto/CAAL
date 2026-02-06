@@ -2,61 +2,61 @@
 
 ## Milestones
 
-- ✅ **v1.0 MVP** - Core voice assistant (shipped 2025)
-- ✅ **v1.1 Tool Registry i18n** - Phases 6-7 (shipped 2025-02)
-- 🚧 **v1.2 Additional LLM Providers** - Phases 8-12 (in progress)
+- **v1.0 MVP** - Core voice assistant (shipped 2025)
+- **v1.1 Tool Registry i18n** - Phases 6-7 (shipped 2025-02)
+- **v1.2 Additional LLM Providers** - Phases 8-12 (in progress)
 
 ## Phases
 
 <details>
-<summary>✅ v1.0 MVP - SHIPPED 2025</summary>
+<summary>v1.0 MVP - SHIPPED 2025</summary>
 
 Core voice assistant with LiveKit WebRTC, multiple providers (Ollama, Groq), Home Assistant integration, n8n workflows, wake word detection, web UI, mobile app, and multilingual support.
 
 </details>
 
 <details>
-<summary>✅ v1.1 Tool Registry i18n - SHIPPED 2025-02</summary>
+<summary>v1.1 Tool Registry i18n - SHIPPED 2025-02</summary>
 
 Tool Registry with full i18n support for French and Italian translations.
 
 </details>
 
-### 🚧 v1.2 Additional LLM Providers (In Progress)
+### v1.2 Additional LLM Providers (In Progress)
 
 **Milestone Goal:** Add OpenAI-compatible and OpenRouter LLM providers with full UI integration
 
-#### ✅ Phase 8: Backend Provider Foundation — COMPLETE
+#### Phase 8: Backend Provider Foundation - COMPLETE
 **Goal**: Both new LLM providers can stream responses and execute tool calls
 **Depends on**: Nothing (first phase of milestone)
 **Requirements**: OPENAI-01, OPENAI-02, OPENAI-03, OPENAI-04, OPENROUTER-01, OPENROUTER-04, OPENROUTER-05
 **Success Criteria** (what must be TRUE):
-  1. ✓ Developer can instantiate OpenAI-compatible provider with custom base URL and API key
-  2. ✓ Developer can instantiate OpenRouter provider with API key
-  3. ✓ Both providers stream responses correctly in voice conversations
-  4. ✓ Both providers execute tool calls (Home Assistant, n8n workflows) successfully
-  5. ✓ Provider factory creates OpenAI-compatible and OpenRouter instances from settings
+  1. Developer can instantiate OpenAI-compatible provider with custom base URL and API key
+  2. Developer can instantiate OpenRouter provider with API key
+  3. Both providers stream responses correctly in voice conversations
+  4. Both providers execute tool calls (Home Assistant, n8n workflows) successfully
+  5. Provider factory creates OpenAI-compatible and OpenRouter instances from settings
 **Plans**: 3/3 complete
 
 Plans:
-- [x] 08-01-PLAN.md — OpenAI-compatible provider implementation
-- [x] 08-02-PLAN.md — OpenRouter provider implementation
-- [x] 08-03-PLAN.md — Factory integration for both providers
+- [x] 08-01-PLAN.md - OpenAI-compatible provider implementation
+- [x] 08-02-PLAN.md - OpenRouter provider implementation
+- [x] 08-03-PLAN.md - Factory integration for both providers
 
-#### ✅ Phase 9: Settings Schema Extension — COMPLETE
+#### Phase 9: Settings Schema Extension - COMPLETE
 **Goal**: Settings system supports both new providers with proper configuration keys
 **Depends on**: Phase 8
 **Requirements**: (Settings infrastructure for all provider features)
 **Success Criteria** (what must be TRUE):
-  1. ✓ settings.json includes openai_api_key, openai_base_url, openai_model keys with defaults
-  2. ✓ settings.json includes openrouter_api_key, openrouter_model keys with defaults
-  3. ✓ Existing installations migrate to new settings schema without data loss
-  4. ✓ create_provider_from_settings() factory builds both new provider types
-  5. ✓ Settings validation rejects invalid configurations (missing base URL, malformed URLs)
+  1. settings.json includes openai_api_key, openai_base_url, openai_model keys with defaults
+  2. settings.json includes openrouter_api_key, openrouter_model keys with defaults
+  3. Existing installations migrate to new settings schema without data loss
+  4. create_provider_from_settings() factory builds both new provider types
+  5. Settings validation rejects invalid configurations (missing base URL, malformed URLs)
 **Plans**: 1/1 complete
 
 Plans:
-- [x] 09-01-PLAN.md — Add DEFAULT_SETTINGS keys, URL validation, and webhook extensions
+- [x] 09-01-PLAN.md - Add DEFAULT_SETTINGS keys, URL validation, and webhook extensions
 
 #### Phase 10: Connection Testing Endpoints
 **Goal**: Users can validate provider configuration before saving settings
@@ -69,10 +69,10 @@ Plans:
   4. System fetches available models from OpenRouter API (400+ models)
   5. User can manually enter model name when auto-discovery fails or is unavailable
   6. Connection tests validate not just connectivity but streaming and tool calling support
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 10-01: [TBD]
+- [ ] 10-01-PLAN.md - Backend test endpoints and frontend proxy routes
 
 #### Phase 11: Setup Wizard Frontend
 **Goal**: First-run users can select and configure both new providers through setup wizard
@@ -110,12 +110,12 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 8 → 9 → 10 → 11 → 12
+Phases execute in numeric order: 8 -> 9 -> 10 -> 11 -> 12
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 8. Backend Provider Foundation | v1.2 | 3/3 | ✓ Complete | 2026-02-05 |
-| 9. Settings Schema Extension | v1.2 | 1/1 | ✓ Complete | 2026-02-06 |
-| 10. Connection Testing Endpoints | v1.2 | 0/TBD | Not started | - |
+| 8. Backend Provider Foundation | v1.2 | 3/3 | Complete | 2026-02-05 |
+| 9. Settings Schema Extension | v1.2 | 1/1 | Complete | 2026-02-06 |
+| 10. Connection Testing Endpoints | v1.2 | 0/1 | Planned | - |
 | 11. Setup Wizard Frontend | v1.2 | 0/TBD | Not started | - |
 | 12. Settings Panel UI | v1.2 | 0/TBD | Not started | - |
