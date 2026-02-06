@@ -48,6 +48,7 @@ from pydantic import BaseModel
 
 from . import registry_cache
 from . import settings as settings_module
+from .settings import validate_url
 
 logger = logging.getLogger(__name__)
 
@@ -439,7 +440,16 @@ async def update_settings(req: SettingsUpdateRequest) -> SettingsResponse:
 
     # Secret fields that should not be overwritten with empty values
     # (UI doesn't show these, so saving would clear them)
-    secret_fields = {"groq_api_key", "hass_token", "n8n_token", "n8n_api_key"}
+    secret_fields = {"groq_api_key", "hass_token", "n8n_token", "n8n_api_key",
+                     "openai_api_key", "openrouter_api_key"}
+
+    # Validate URL fields
+    url_fields = ["openai_base_url", "ollama_host", "hass_host", "n8n_url"]
+    for field in url_fields:
+        if field in req.settings and req.settings[field]:
+            is_valid, error = validate_url(req.settings[field])
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=f"Invalid {field}: {error}")
 
     # Merge with new settings (only known keys)
     for key, value in req.settings.items():
@@ -449,9 +459,14 @@ async def update_settings(req: SettingsUpdateRequest) -> SettingsResponse:
                 continue
             current[key] = value
 
-    # Enforce STT/LLM provider coupling: Ollama→Speaches, Groq→Groq
+    # Enforce STT/LLM provider coupling
     if "llm_provider" in req.settings:
-        current["stt_provider"] = "groq" if current["llm_provider"] == "groq" else "speaches"
+        llm = current["llm_provider"]
+        # Cloud providers use Groq STT, local providers use Speaches
+        if llm in ("groq", "openrouter"):
+            current["stt_provider"] = "groq"
+        else:  # ollama, openai_compatible
+            current["stt_provider"] = "speaches"
 
     # Save merged settings
     settings_module.save_settings(current)
